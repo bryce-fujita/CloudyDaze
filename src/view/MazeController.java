@@ -98,7 +98,6 @@ public class MazeController extends JPanel implements PropertyChangeListener{
         playerSprite.setLocation(TILE_SIZE, TILE_SIZE - (TILE_SIZE/4));
         pane.add(playerSprite, 0);
         
-        //Add the ColorSlider objeccv t itself as a PCL to the model.  
         myMaze.addPropertyChangeListener(pane);
         frame.setContentPane(pane);
         
@@ -178,7 +177,7 @@ public class MazeController extends JPanel implements PropertyChangeListener{
             }
             move++;
             movePlayer();
-            if (move >= TILE_SIZE) {
+            if (move > TILE_SIZE) {
                 player.setMoving(false);
                 Vertex myTru = player.getVertex();
                 playerSprite.setLocation((myTru.col+1)*(TILE_SIZE*2) - TILE_SIZE, ((myTru.row+1)*TILE_SIZE*2) - (TILE_SIZE/4)- TILE_SIZE);

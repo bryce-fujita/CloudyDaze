@@ -25,7 +25,6 @@ public class Maze implements PropertyChangeEnabledMaze, ActionListener, Property
     
     private int numRows;
     private int numCols;
-    private boolean dBug;
     private Vertex [][] myMatrix;
     private char[][] myCharMatrix;
     private PropertyChangeSupport myPcs;
@@ -36,7 +35,6 @@ public class Maze implements PropertyChangeEnabledMaze, ActionListener, Property
     public Maze(int rows, int cols, boolean debug) {
         numRows = rows;
         numCols = cols;
-        dBug = debug;
         myPcs = new PropertyChangeSupport(this);
         myMatrix = new Vertex[rows][cols];
         constructMatrix();
@@ -118,52 +116,6 @@ public class Maze implements PropertyChangeEnabledMaze, ActionListener, Property
         return true;
     }
 
-    private void debugOn(boolean[][] theVisited) {
-        int xRows = (numRows*2)+1;
-        int xCols = (numCols*2)+1;
-        char[][] xMatrix = new char[xRows][xCols];
-        for (int i = 0; i < xRows; i++) { // Constructs an array full of Xs to be changed
-            for (int j = 0; j < xCols; j++) {
-                if ((i%2 == 1) && (j%2 == 1) && (i != xRows)) {
-                    xMatrix[i][j] = ' ';
-                } else {
-                    xMatrix[i][j] = 'X';
-                }
-            }
-        }
-        xMatrix[0][1] = ' ';
-        xMatrix[xRows-1][xCols-2] = ' ';
-        /// Changing known vertexes for ' ' and the appropriate path
-        for (int i = 0; i < numRows; i++) {
-            for (int j = 0; j < numCols; j++) {
-                if (theVisited[i][j] == true) { //Show a V on xMatrix
-                    int xRow = (i * 2) + 1;
-                    int xCol = (j * 2) + 1;
-                    xMatrix[xRow][xCol] = 'V'; // Insert V into the matrix
-                    HashSet<Edge> edges = myMatrix[i][j].edges;
-                    for (Edge edge : edges) {
-                        int startRow = edge.start.row;
-                        int startCol = edge.start.col;
-                        int endRow = edge.end.row;
-                        int endCol = edge.end.col;
-                        int difRow = (startRow-endRow); //Ex Edge to Below: (2,1)-(2,2) = (0,-1)
-                        int difCol = (startCol-endCol);
-                        xMatrix[xRow-difRow][xCol-difCol] = ' ';
-                    }
-                }
-            }
-        }
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < xRows; i++) {
-            for (int j = 0; j < xCols; j++) {
-                sb.append(xMatrix[i][j]);
-                sb.append(' ');
-            }
-            sb.append('\n');
-        }
-        System.out.println(sb.toString());
-    }
-
     private void primTheTree(Vertex[][] theMatrix) {
         boolean[][] visited = new boolean[numRows][numCols];
         visited[0][0] = true;
@@ -191,9 +143,6 @@ public class Maze implements PropertyChangeEnabledMaze, ActionListener, Property
             myMatrix[start.row][start.col].edges.add(new Edge(myMatrix[start.row][start.col], myMatrix[end.row][end.col], weight, dir));
             visited[end.row][end.col] = true;
             seenAll = checkBool(visited);
-            if (dBug) {
-                debugOn(visited);
-            }
         }
     }
 

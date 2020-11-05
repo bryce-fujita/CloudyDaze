@@ -1,4 +1,4 @@
-//Commit change./
+
 package Application;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;

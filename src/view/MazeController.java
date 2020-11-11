@@ -114,7 +114,6 @@ public class MazeController extends JPanel implements PropertyChangeListener{
         } catch (LineUnavailableException e) {
             e.printStackTrace();
         }
-
         
     }
     
@@ -177,7 +176,8 @@ public class MazeController extends JPanel implements PropertyChangeListener{
             }
             move++;
             movePlayer();
-            if (move > TILE_SIZE) {
+            if (move >= TILE_SIZE) {
+                move = 0;
                 player.setMoving(false);
                 Vertex myTru = player.getVertex();
                 playerSprite.setLocation((myTru.col+1)*(TILE_SIZE*2) - TILE_SIZE, ((myTru.row+1)*TILE_SIZE*2) - (TILE_SIZE/4)- TILE_SIZE);

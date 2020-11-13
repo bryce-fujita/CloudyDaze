@@ -1,37 +1,42 @@
 package model;
 
-import static model.PropertyChangeEnabledMaze.PROPERTY_PLAYER;
 import static logic.PropertyChangeEnabledPlayer.PROPERTY_POSITION;
-
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Random;
-
-import javax.swing.Timer;
 
 import logic.Direction;
 import logic.Player;
 
-public class Maze implements PropertyChangeEnabledMaze, ActionListener, PropertyChangeListener {
+public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
     
-    /** Set the delay for the timer. */
-    private static int TIMER_DELAY = 80;
-    
+    /** The number of rows in the maze. */
     private int numRows;
+    
+    /** The number of columns in the maze. */
     private int numCols;
+    
+    /** A 2D array to store all of the vertices. */
     private Vertex [][] myMatrix;
+    
+    /** A 2D array that represents all possible paths. */
     private char[][] myCharMatrix;
+    
+    /**Used for notifying listeners of any changes. */
     private PropertyChangeSupport myPcs;
-    private Timer myTimer;
-    private int myTime;
+    
+    /** A class used to keep track of the players current status. */
     private Player myPlayer;
 
+    /** 
+     * Constructor for Maze Model.
+     * @param rows The number of rows in the maze
+     * @param cols The number of columns in the maze
+     * @param debug A tool used to show the solution path to the end
+     */
     public Maze(int rows, int cols, boolean debug) {
         numRows = rows;
         numCols = cols;
@@ -40,24 +45,27 @@ public class Maze implements PropertyChangeEnabledMaze, ActionListener, Property
         constructMatrix();
         findPath();
         myCharMatrix = makeXMatrix();
-        myTimer = new Timer(TIMER_DELAY, this);
-        myTimer.start();
-        myTime = 0;
         myPlayer = new Player();
         myPlayer.addPropertyChangeListener(this);
         myPlayer.setPosition(myMatrix[0][0]);
     }
 
+    /**
+     * A recursive method to find the solution path.
+     * @param theVertex The starting vertex
+     * @param theVisited The 
+     * @return Return true if the path is a correct path.  False if there is no feasible way to the solution.
+     */
     private boolean recPath(Vertex theVertex,boolean[][] theVisited) {
-        if ((theVertex.row == (numRows-1)) && (theVertex.col == (numCols-1))) {// end case
+        if ((theVertex.getRow() == (numRows-1)) && (theVertex.getCol() == (numCols-1))) {// end case / last vertex
             theVertex.path = true;
             return true;
         }
-        theVisited[theVertex.row][theVertex.col] = true;
-        HashSet<Edge> edges = theVertex.edges;
+        theVisited[theVertex.getRow()][theVertex.getCol()] = true;
+        HashSet<Edge> edges = theVertex.getEdges();
         for (Edge edge : edges) {
             Vertex end = edge.end;
-            if (!theVisited[end.row][end.col]) {
+            if (!theVisited[end.getRow()][end.getCol()]) {
                 boolean truePath = recPath(end, theVisited);
                 if (truePath) {
                     theVertex.path = true;
@@ -68,13 +76,22 @@ public class Maze implements PropertyChangeEnabledMaze, ActionListener, Property
         return false;
     }
 
+    /**
+     * A method that calls the recursive method to finding the path.
+     */
     private void findPath() {
         boolean[][] visited = new boolean[numRows][numCols];
         recPath(myMatrix[0][0], visited);
     }
 
+    /**
+     * Returns the edge between two vertices.
+     * @param look The starting edge
+     * @param find The destination edge
+     * @return
+     */
     private Edge findEdge(Vertex look, Vertex find) {
-        HashSet<Edge> set = look.edges;
+        HashSet<Edge> set = look.getEdges();
         for (Edge temp : set) {
             if ((temp.start == look) && (temp.end == find)) {
                 return temp;
@@ -83,6 +100,12 @@ public class Maze implements PropertyChangeEnabledMaze, ActionListener, Property
         return null;
     }
 
+    /**
+     * Used in prims algorithm for finding the smallest weighted edge
+     * @param theList An array list of vertex's that have been currently travelled to
+     * @param theSeenMatrix An array booleans that shows on the graph which vertexes have been seen
+     * @return The Edge with the lowest weight
+     */
     public Edge findLowestEdge(ArrayList<Vertex> theList, boolean[][] theSeenMatrix) { // Super important for prim's algorithm.
         if (theList.size() <= 0){
             System.out.println("list empty");
@@ -91,9 +114,9 @@ public class Maze implements PropertyChangeEnabledMaze, ActionListener, Property
         Edge temp = null;
         for (int i = 0; i < theList.size(); i++) {
             Vertex v = theList.get(i);
-            HashSet<Edge> edges = v.edges;
+            HashSet<Edge> edges = v.getEdges();
             for (Edge cur : edges) {
-                if (!theSeenMatrix[cur.end.row][cur.end.col]) {
+                if (!theSeenMatrix[cur.end.getRow()][cur.end.getCol()]) {
                     if (temp == null) temp = cur;
                     else if ((cur.weight < temp.weight))  {
                         temp = cur;
@@ -107,6 +130,12 @@ public class Maze implements PropertyChangeEnabledMaze, ActionListener, Property
         return temp;
     }
 
+    /**
+     * Checks to see if every vertex has been seen.  Used to
+     * determine if to continue Prim's algorithm.
+     * @param theVisited A 2D array which shows all the visited locations
+     * @return False if a vertex hasn't been seen and true if all have been seen.
+     */
     private boolean checkBool(boolean[][] theVisited) {
         for(int i = 0; i < numRows; i++) {
             for(int j = 0; j < numCols; j++) {
@@ -138,14 +167,19 @@ public class Maze implements PropertyChangeEnabledMaze, ActionListener, Property
             Vertex end = lowestEdge.end;
             int weight = lowestEdge.weight;
             Direction dir = lowestEdge.myDir;
-            myMatrix[end.row][end.col] = new Vertex(end.row,end.col);
-            myMatrix[end.row][end.col].edges.add(new Edge(myMatrix[end.row][end.col], myMatrix[start.row][start.col], weight, Direction.reverseValueOf(dir)));
-            myMatrix[start.row][start.col].edges.add(new Edge(myMatrix[start.row][start.col], myMatrix[end.row][end.col], weight, dir));
-            visited[end.row][end.col] = true;
+            myMatrix[end.getRow()][end.getCol()] = new Vertex(end.getRow(),end.getCol());
+            myMatrix[end.getRow()][end.getCol()].getEdges().add(new Edge(myMatrix[end.getRow()][end.getCol()], myMatrix[start.getRow()][start.getCol()], weight, Direction.reverseValueOf(dir)));
+            myMatrix[start.getRow()][start.getCol()].getEdges().add(new Edge(myMatrix[start.getRow()][start.getCol()], myMatrix[end.getRow()][end.getCol()], weight, dir));
+            visited[end.getRow()][end.getCol()] = true;
             seenAll = checkBool(visited);
         }
     }
 
+    /**
+     * This constructs a maze that fills it with vertices.  Each
+     * vertex will have a weighted edge that will connect it to its
+     * adjacent vertices.
+     */
     private void constructMatrix() {
         Vertex [][] temp = new Vertex[numRows][numCols];
         for(int i = 0; i < numRows; i++) {
@@ -158,28 +192,32 @@ public class Maze implements PropertyChangeEnabledMaze, ActionListener, Property
                 Vertex cur = temp[i][j];
                 if (numCols > (j + 1)) { //Checking for right vertex;
                     Vertex toRight = temp[i][j+1];
-                    temp[i][j].edges.add(new Edge(cur,toRight, Direction.RIGHT));
+                    temp[i][j].getEdges().add(new Edge(cur,toRight, Direction.RIGHT));
                 }
                 if (numRows > (i + 1)) { //Checking for below vertex;
                     Vertex toBelow = temp[i+1][j];
-                    temp[i][j].edges.add(new Edge(cur,toBelow, Direction.DOWN));
+                    temp[i][j].getEdges().add(new Edge(cur,toBelow, Direction.DOWN));
                 }
                 if (-1 < (j - 1)) { //Checking for left vertex;
                     Vertex toLeft = temp[i][j-1];
                     Edge exist = findEdge(toLeft, cur);
-                    temp[i][j].edges.add(new Edge(exist, Direction.LEFT));
+                    temp[i][j].getEdges().add(new Edge(exist, Direction.LEFT));
                 }
                 if (-1 < (i - 1)) { //Checking for above vertex;
                     Vertex toAbove = temp[i-1][j];
                     Edge exist = findEdge(toAbove, cur);
-                    temp[i][j].edges.add(new Edge(exist, Direction.UP));
+                    temp[i][j].getEdges().add(new Edge(exist, Direction.UP));
                 }
             }
         }
         primTheTree(temp);
     }
     
-
+    /**
+     * Constructs a 2D char array that will be used to interpret
+     * all the paths of maze.
+     * @return A 2D char array
+     */
     public char[][] makeXMatrix() {
         int xRows = (numRows*2)+1;
         int xCols = (numCols*2)+1;
@@ -204,12 +242,12 @@ public class Maze implements PropertyChangeEnabledMaze, ActionListener, Property
                 } else {
                     xMatrix[xRow][xCol] = ' '; // Insert ' ' into the matrix
                 }
-                HashSet<Edge> edges = myMatrix[i][j].edges;
+                HashSet<Edge> edges = myMatrix[i][j].getEdges();
                 for (Edge edge : edges) {
-                    int startRow = edge.start.row;
-                    int startCol = edge.start.col;
-                    int endRow = edge.end.row;
-                    int endCol = edge.end.col;
+                    int startRow = edge.start.getRow();
+                    int startCol = edge.start.getCol();
+                    int endRow = edge.end.getRow();
+                    int endCol = edge.end.getCol();
                     int difRow = (startRow-endRow); //Ex Edge to Below: (2,1)-(2,2) = (0,-1) need inverse (0,1)
                     int difCol = (startCol-endCol);
                     xMatrix[xRow-difRow][xCol-difCol] = ' ';
@@ -228,18 +266,34 @@ public class Maze implements PropertyChangeEnabledMaze, ActionListener, Property
         return xMatrix;
     }
 
+    /**
+     * Allows access to the character array.
+     * @return Returns character array
+     */
     public char[][] getMatrix() {
         return myCharMatrix;
     }
     
+    /**
+     * The number of rows the maze has.
+     * @return Returns number of rows the maze has
+     */
     public int getRows() {
         return numRows;
     }
     
+    /**
+     * The number of columns the array has.
+     * @return Returns number of columns the array has
+     */
     public int getCols() {
         return numCols;
     }
     
+    /**
+     * Allows access to the player model.
+     * @return Returns the player model.
+     */
     public Player getPlayer() {
         return myPlayer;
     }
@@ -266,12 +320,6 @@ public class Maze implements PropertyChangeEnabledMaze, ActionListener, Property
     public void removePropertyChangeListener(String thePropertyName, PropertyChangeListener theListener) {
         myPcs.removePropertyChangeListener(thePropertyName, theListener);
         
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        myTime = myTime + 1;
-        myPcs.firePropertyChange(PROPERTY_TIME, null, myTime);
     }
 
     @Override

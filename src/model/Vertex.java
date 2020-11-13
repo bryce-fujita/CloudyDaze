@@ -3,9 +3,9 @@ package model;
 import java.util.HashSet;
 
 public class Vertex {
-    public HashSet<Edge> edges;
-    public int row;
-    public int col;
+    private HashSet<Edge> edges;
+    private int row;
+    private int col;
     boolean path = false;
     public Vertex(int theRow, int theCol) {
         row = theRow;
@@ -15,5 +15,13 @@ public class Vertex {
     
     public HashSet<Edge> getEdges() {
         return edges;
+    }
+
+    public int getCol() {
+        return col;
+    }
+
+    public int getRow() {
+        return row;
     }
 }

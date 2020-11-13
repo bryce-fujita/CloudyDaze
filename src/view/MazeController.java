@@ -6,6 +6,8 @@ import static model.PropertyChangeEnabledMaze.PROPERTY_PLAYER;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.beans.PropertyChangeEvent;
@@ -26,6 +28,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.Timer;
 
 import logic.Direction;
 import logic.Player;
@@ -33,29 +36,36 @@ import model.Maze;
 import model.Vertex;
 import model.Edge;
 
-public class MazeController extends JPanel implements PropertyChangeListener{
-
+public class MazeController extends JPanel implements PropertyChangeListener, ActionListener{
+    /** Set the delay for the timer. */
+    final private static int TIMER_DELAY = 80;
+    
     final private static int TILE_SIZE = 30;
     
     final private static int NUM_ROWS = 10;
     
     final private static int NUM_COLS = 10;
+    
+    
 
     /**
      * 
      */
     private static final long serialVersionUID = -9220529195101333347L;
-    static List<JLabel> myPath;
-    static Maze myMaze;
-    char[][] xMatrix;
-    List<JLabel> myClouds;
-    static JLabel playerSprite;
+    private static List<JLabel> myPath;
+    private static Maze myMaze;
+    private static JLabel playerSprite;
+    private List<JLabel> myClouds;
     private int move;
+    private Timer myTimer;
+    private int myTime;
 
     public MazeController() {
-        xMatrix = myMaze.getMatrix();
         myClouds = new ArrayList<>();
         myPath = new ArrayList<>();
+        myTimer = new Timer(TIMER_DELAY, this);
+        myTimer.start();
+        myTime = 0;
         move = 0;
     }
     
@@ -102,18 +112,18 @@ public class MazeController extends JPanel implements PropertyChangeListener{
         frame.setContentPane(pane);
         
         
-        File soundFile = new File("music//CloudyDaze.wav");
-        try { AudioInputStream in
-            = AudioSystem.getAudioInputStream(soundFile); Clip clip =
-            AudioSystem.getClip(); clip.open(in); clip.start();
-            clip.loop(Clip.LOOP_CONTINUOUSLY);
-        } catch (UnsupportedAudioFileException e) {
-            e.printStackTrace();
-        } catch (IOException e) { 
-            e.printStackTrace();
-        } catch (LineUnavailableException e) {
-            e.printStackTrace();
-        }
+//        File soundFile = new File("music//CloudyDaze.wav");
+//        try { AudioInputStream in
+//            = AudioSystem.getAudioInputStream(soundFile); Clip clip =
+//            AudioSystem.getClip(); clip.open(in); clip.start();
+//            clip.loop(Clip.LOOP_CONTINUOUSLY);
+//        } catch (UnsupportedAudioFileException e) {
+//            e.printStackTrace();
+//        } catch (IOException e) { 
+//            e.printStackTrace();
+//        } catch (LineUnavailableException e) {
+//            e.printStackTrace();
+//        }
         
     }
     
@@ -180,7 +190,7 @@ public class MazeController extends JPanel implements PropertyChangeListener{
                 move = 0;
                 player.setMoving(false);
                 Vertex myTru = player.getVertex();
-                playerSprite.setLocation((myTru.col+1)*(TILE_SIZE*2) - TILE_SIZE, ((myTru.row+1)*TILE_SIZE*2) - (TILE_SIZE/4)- TILE_SIZE);
+                playerSprite.setLocation((myTru.getCol()+1)*(TILE_SIZE*2) - TILE_SIZE, ((myTru.getRow()+1)*TILE_SIZE*2) - (TILE_SIZE/4)- TILE_SIZE);
             }
         }else {
             move = 0;
@@ -197,26 +207,31 @@ public class MazeController extends JPanel implements PropertyChangeListener{
     @Override
     public void propertyChange(PropertyChangeEvent theEvent) {
         if (PROPERTY_TIME.equals(theEvent.getPropertyName())) {
-            int theEve = (Integer) theEvent.getNewValue();
-            Random rand = new Random();
-            int randI = rand.nextInt(350);
-            if (randI <= 10) {
-                JLabel cloud = new JLabel(new ImageIcon("icons//BackgroundCloud.png"));
-                cloud.setSize(100,50);
-                int height = rand.nextInt((NUM_COLS*2) * TILE_SIZE);
-                int distance = (((NUM_ROWS*2) + 1) * TILE_SIZE);
-                cloud.setLocation(distance, height);
-                myClouds.add(cloud);
-                this.add(cloud);
-            }
-            moveBClouds();
-            updatePClouds(theEve);
-            updatePlayer(theEve);
-            repaint();
+
         } else if(PROPERTY_PLAYER.equals(theEvent.getPropertyName())) {
             Player player = myMaze.getPlayer();
             player.setMoving(true);
         }
+    }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        myTime++;
+        Random rand = new Random();
+        int randI = rand.nextInt(350);
+        if (randI <= 10) {
+            JLabel cloud = new JLabel(new ImageIcon("icons//BackgroundCloud.png"));
+            cloud.setSize(100,50);
+            int height = rand.nextInt((NUM_COLS*2) * TILE_SIZE);
+            int distance = (((NUM_ROWS*2) + 1) * TILE_SIZE);
+            cloud.setLocation(distance, height);
+            myClouds.add(cloud);
+            this.add(cloud);
+        }
+        moveBClouds();
+        updatePClouds(myTime);
+        updatePlayer(myTime);
+        repaint();
     }
 
     private static class MazeFrame extends JFrame implements KeyListener {
@@ -254,12 +269,12 @@ public class MazeController extends JPanel implements PropertyChangeListener{
             Player myPlayer = myMaze.getPlayer();
             if(!myPlayer.isMoving()) {
                 Vertex curLocation = myPlayer.getVertex();
-                HashSet<Edge> curEdges = curLocation.edges;
+                HashSet<Edge> curEdges = curLocation.getEdges();
                 HashSet<Direction> validDirections = new HashSet<Direction>();
                 for (Edge c : curEdges) {
                     validDirections.add(c.myDir);
                 }
-                System.out.println("Current Vertex: " + curLocation.row + "," + curLocation.col);
+                System.out.println("Current Vertex: " + curLocation.getRow() + "," + curLocation.getCol());
                 printEnum(validDirections);
                 System.out.print('\n');
                 int keyCode = e.getKeyCode();
@@ -267,35 +282,33 @@ public class MazeController extends JPanel implements PropertyChangeListener{
                     myPlayer.setDirection(Direction.UP);
                     Vertex next = findVert(curEdges, Direction.UP);
                     myPlayer.setPosition(next);
-                    System.out.println("Next Vertex: " + next.row + "," + next.col);
+                    System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
                 } else if ((keyCode == 40) && (validDirections.contains(Direction.DOWN))) {
                     myPlayer.setDirection(Direction.DOWN);
                     Vertex next = findVert(curEdges, Direction.DOWN);
                     myPlayer.setPosition(next);
-                    System.out.println("Next Vertex: " + next.row + "," + next.col);
+                    System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
                 } else if ((keyCode == 39) && (validDirections.contains(Direction.RIGHT))) {
                     myPlayer.setDirection(Direction.RIGHT);
                     Vertex next = findVert(curEdges, Direction.RIGHT);
-                    System.out.println("Next Vertex: " + next.row + "," + next.col);
+                    System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
                     myPlayer.setPosition(next);
                 } else if ((keyCode == 37) && (validDirections.contains(Direction.LEFT))) {
                     myPlayer.setDirection(Direction.LEFT);
                     Vertex next = findVert(curEdges, Direction.LEFT);
                     myPlayer.setPosition(next);
-                    System.out.println("Next Vertex: " + next.row + "," + next.col);
+                    System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
                 }
             }
         }
 
         @Override
         public void keyReleased(KeyEvent e) {
-
         }
         
         
         @Override
         public void keyTyped(KeyEvent e) {
-
         }
     }
 }

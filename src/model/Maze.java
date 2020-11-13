@@ -23,7 +23,7 @@ public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
     private Vertex [][] myMatrix;
     
     /** A 2D array that represents all possible paths. */
-    private char[][] myCharMatrix;
+    private char[][] myCharMatrix; 
     
     /**Used for notifying listeners of any changes. */
     private PropertyChangeSupport myPcs;
@@ -106,7 +106,7 @@ public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
      * @param theSeenMatrix An array booleans that shows on the graph which vertexes have been seen
      * @return The Edge with the lowest weight
      */
-    public Edge findLowestEdge(ArrayList<Vertex> theList, boolean[][] theSeenMatrix) { // Super important for prim's algorithm.
+    private Edge findLowestEdge(ArrayList<Vertex> theList, boolean[][] theSeenMatrix) { // Super important for prim's algorithm.
         if (theList.size() <= 0){
             System.out.println("list empty");
             return null;

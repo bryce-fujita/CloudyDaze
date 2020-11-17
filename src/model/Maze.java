@@ -218,7 +218,7 @@ public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
      * all the paths of maze.
      * @return A 2D char array
      */
-    public char[][] makeXMatrix() {
+    private char[][] makeXMatrix() {
         int xRows = (numRows*2)+1;
         int xCols = (numCols*2)+1;
         char[][] xMatrix = new char[xRows][xCols];
@@ -238,7 +238,7 @@ public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
                 int xRow = (i * 2) + 1;
                 int xCol = (j * 2) + 1;
                 if (myMatrix[i][j].path) {
-                    xMatrix[xRow][xCol] = '+'; // Insert '+' into the matrix if it's the solution path.
+                    xMatrix[xRow][xCol] = '+'; // Insert '+-' into the matrix if it's the solution path.
                 } else {
                     xMatrix[xRow][xCol] = ' '; // Insert ' ' into the matrix
                 }

@@ -8,7 +8,6 @@ import model.Vertex;
 
 public class Player implements PropertyChangeEnabledPlayer {
     
-    private Point myPosition;
     private int score;
     private Direction myDir;
     private boolean moving;
@@ -47,9 +46,7 @@ public class Player implements PropertyChangeEnabledPlayer {
     public Vertex getVertex() {
         return myVertex;
     }
-    public Point getPosition() {
-        return new Point(myPosition);
-    }
+    
 
     @Override
     public void addPropertyChangeListener(PropertyChangeListener theListener) {

@@ -154,6 +154,46 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         }
     }
     
+    private void updatePlayer(int theTime) {
+        Player player = myMaze.getPlayer();
+        String cdir = "";
+        if (player.getDirection() == Direction.RIGHT) {
+            cdir = "R";
+        } else if (player.getDirection() == Direction.LEFT) {
+            cdir = "L";
+        } else if (player.getDirection() == Direction.UP) {
+            cdir = "U";
+        }
+        if (player.isMoving() && move < (TILE_SIZE*2)) {
+            int mod = (theTime % 20);
+            if (mod < 5) {
+                playerSprite.setIcon(new ImageIcon("icons//Player_Standing_1" + cdir + ".png"));
+            } else if ((mod >= 5) && (mod < 10)) {
+                playerSprite.setIcon(new ImageIcon("icons//Player_Running_1" + cdir + ".png"));
+            } else if ((mod >= 10) && (mod < 15)) {
+                playerSprite.setIcon(new ImageIcon("icons//Player_Standing_2" + cdir + ".png"));
+            } else if ((mod >= 15) && (mod < 20)) {
+                playerSprite.setIcon(new ImageIcon("icons//Player_Running_2" + cdir + ".png"));
+            }
+            move++;
+            movePlayer();
+            if (move >= TILE_SIZE) {
+                move = 0;
+                player.setMoving(false);
+                Vertex myTru = player.getVertex();
+                playerSprite.setLocation((myTru.getCol()+1)*(TILE_SIZE*2) - TILE_SIZE, ((myTru.getRow()+1)*TILE_SIZE*2) - (TILE_SIZE/4)- TILE_SIZE);
+            }
+        }else {
+            move = 0;
+            int mod = (theTime % 10);
+            if (mod < 5) {
+                playerSprite.setIcon(new ImageIcon("icons//Player_Standing_1" + cdir + ".png"));
+            } else {
+                playerSprite.setIcon(new ImageIcon("icons//Player_Standing_2" + cdir + ".png"));
+            }
+        }
+    }
+    
     private void movePlayer() {
         Player player = myMaze.getPlayer();
         if (player.getDirection().equals(Direction.UP)) {
@@ -168,38 +208,6 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         } else if (player.getDirection().equals(Direction.LEFT)) {
             Point pos = playerSprite.getLocation();
             playerSprite.setLocation(pos.x-2, pos.y);
-        }
-    }
-    
-    private void updatePlayer(int theTime) {
-        Player player = myMaze.getPlayer();
-        if (player.isMoving() && move < (TILE_SIZE*2)) {
-            int mod = (theTime % 20);
-            if (mod < 5) {
-                playerSprite.setIcon(new ImageIcon("icons//Player_Standing_1.png"));
-            } else if ((mod >= 5) && (mod < 10)) {
-                playerSprite.setIcon(new ImageIcon("icons//Player_Running_1.png"));
-            } else if ((mod >= 10) && (mod < 15)) {
-                playerSprite.setIcon(new ImageIcon("icons//Player_Standing_2.png"));
-            } else if ((mod >= 15) && (mod < 20)) {
-                playerSprite.setIcon(new ImageIcon("icons//Player_Running_2.png"));
-            }
-            move++;
-            movePlayer();
-            if (move >= TILE_SIZE) {
-                move = 0;
-                player.setMoving(false);
-                Vertex myTru = player.getVertex();
-                playerSprite.setLocation((myTru.getCol()+1)*(TILE_SIZE*2) - TILE_SIZE, ((myTru.getRow()+1)*TILE_SIZE*2) - (TILE_SIZE/4)- TILE_SIZE);
-            }
-        }else {
-            move = 0;
-            int mod = (theTime % 10);
-            if (mod < 5) {
-                playerSprite.setIcon(new ImageIcon("icons//Player_Standing_1.png"));
-            } else {
-                playerSprite.setIcon(new ImageIcon("icons//Player_Standing_2.png"));
-            }
         }
     }
 
@@ -248,7 +256,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
             return returnMe;
         }
         
-        public void printEnum(HashSet<Direction> dirs) {
+        public void printEnum(HashSet<Direction> dirs) { //Used for testing.
             StringBuilder sb = new StringBuilder();
             for(Direction dir: dirs) {
                 if (dir.equals(Direction.DOWN)) {

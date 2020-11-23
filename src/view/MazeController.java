@@ -12,18 +12,11 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.*;
 
 import logic.Direction;
@@ -99,6 +92,15 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
                 }
             }
         }
+
+        // Add coins to random clouds - Needs movement implemented
+        for(int i = 0; i < 6; i ++) {
+            JLabel coin = new JLabel(new ImageIcon("icons//Coin.png"));
+            coin.setSize(TILE_SIZE-5, TILE_SIZE-5);
+            Random rand = new Random();
+            coin.setLocation(myPath.get(rand.nextInt(myPath.size())).getLocation());
+            pane.add(coin, 0);
+        }
         
         playerSprite = new JLabel(new ImageIcon("icons//Player_Standing_1.png"));
         playerSprite.setSize(TILE_SIZE,TILE_SIZE);
@@ -167,10 +169,10 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
                 path.setLocation(path.getLocation().x, path.getLocation().y-1);
             } 
         } else if ((mod >= 5) && (mod >=8)) {
-            for(JLabel path : myPath) {
+            for (JLabel path : myPath) {
                 path.setIcon(new ImageIcon("icons//CloudTile2.png"));
-                path.setLocation(path.getLocation().x, path.getLocation().y+1);
-            } 
+                path.setLocation(path.getLocation().x, path.getLocation().y + 1);
+            }
         }
     }
     
@@ -260,6 +262,11 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         updatePClouds(myTime);
         updatePlayer(myTime);
         repaint();
+    }
+
+    public Object getRandomlocation(ArrayList pathList) {
+        Random rand = new Random();
+        return pathList.get(rand.nextInt(pathList.size()));
     }
 
     private static class MazeFrame extends JFrame implements KeyListener {

@@ -115,7 +115,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         JMenu menu = new JMenu("Game");
         JMenuItem newGame = new JMenuItem(new AbstractAction("New Game") {
             public void actionPerformed(ActionEvent ae) {
-                createAndShowGUI();
+                //createAndShowGUI();
             }
         });
         JMenuItem saveGame = new JMenuItem(new AbstractAction("Save Game") {

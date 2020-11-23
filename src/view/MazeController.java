@@ -220,16 +220,16 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         Player player = myMaze.getPlayer();
         if (player.getDirection().equals(Direction.UP)) {
             Point pos = playerSprite.getLocation();
-            playerSprite.setLocation(pos.x, pos.y-2);
+            playerSprite.setLocation(pos.x, pos.y-1);
         } else if (player.getDirection().equals(Direction.DOWN)) {
             Point pos = playerSprite.getLocation();
-            playerSprite.setLocation(pos.x, pos.y+2);
+            playerSprite.setLocation(pos.x, pos.y+1);
         } else if (player.getDirection().equals(Direction.RIGHT)) {
             Point pos = playerSprite.getLocation();
-            playerSprite.setLocation(pos.x+2, pos.y);
+            playerSprite.setLocation(pos.x+1, pos.y);
         } else if (player.getDirection().equals(Direction.LEFT)) {
             Point pos = playerSprite.getLocation();
-            playerSprite.setLocation(pos.x-2, pos.y);
+            playerSprite.setLocation(pos.x-1, pos.y);
         }
     }
 

@@ -24,11 +24,7 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.Timer;
+import javax.swing.*;
 
 import logic.Direction;
 import logic.Player;
@@ -85,6 +81,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         frame.pack();
         frame.setVisible(true);
         frame.addKeyListener(frame);
+
         
         int x = ((NUM_ROWS*2) + 1) * TILE_SIZE;
         int y = ((NUM_COLS*2) + 1) * TILE_SIZE;
@@ -110,7 +107,30 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         
         myMaze.addPropertyChangeListener(pane);
         frame.setContentPane(pane);
-        
+
+        // Adding a menu bar
+        JMenuBar menubar = new JMenuBar();
+        JMenu menu = new JMenu("Game");
+        JMenuItem newGame = new JMenuItem(new AbstractAction("New Game") {
+            public void actionPerformed(ActionEvent ae) {
+                createAndShowGUI();
+            }
+        });
+        JMenuItem saveGame = new JMenuItem(new AbstractAction("Save Game") {
+            public void actionPerformed(ActionEvent ae) {
+                System.out.println("Save Game");
+            }
+        });
+        JMenuItem loadGame = new JMenuItem(new AbstractAction("Load Game") {
+            public void actionPerformed(ActionEvent ae) {
+                System.out.println("Load Game");
+            }
+        });
+        menu.add(newGame);
+        menu.add(saveGame);
+        menu.add(loadGame);
+        menubar.add(menu);
+        frame.setJMenuBar(menubar);
         
 //        File soundFile = new File("music//CloudyDaze.wav");
 //        try { AudioInputStream in

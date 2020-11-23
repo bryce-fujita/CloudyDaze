@@ -3,6 +3,7 @@ package view;
 import static model.PropertyChangeEnabledMaze.PROPERTY_TIME;
 import static model.PropertyChangeEnabledMaze.PROPERTY_PLAYER;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Point;
@@ -10,6 +11,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -25,8 +28,11 @@ import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JLayeredPane;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
@@ -36,7 +42,7 @@ import model.Maze;
 import model.Vertex;
 import model.Edge;
 
-public class MazeController extends JPanel implements PropertyChangeListener, ActionListener{
+public class MazeController extends JPanel implements PropertyChangeListener, ActionListener, KeyListener {
     /** Set the delay for the timer. */
     final private static int TIMER_DELAY = 80;
     
@@ -69,22 +75,33 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         move = 0;
     }
     
-    public static void createAndShowGUI() {
+    public void createAndShowGUI() {
         //Create and set up the window.
-        MazeFrame frame = new MazeFrame("Maze Game");
+        JFrame frame = new JFrame("Maze Game");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+   
+        
         
         myMaze = new Maze(NUM_ROWS, NUM_COLS, true);
         char[][] cMatrix = myMaze.getMatrix();
         
         
+        
         //Create and set up the content pane.
-        final MazeController pane = new MazeController();
-        pane.setOpaque(true); //content panes must be opaque
-        pane.setLayout(null);
+        setOpaque(true); //content panes must be opaque
+        setLayout(null);
         frame.pack();
         frame.setVisible(true);
-        frame.addKeyListener(frame);
+             
+      //Create a menu that shows on initial startup, blurs game behind it
+        JPanel menu = new JPanel();
+        menu.setSize(200, 200);
+        JButton newGameBtn = new JButton("New Game");
+        newGameBtn.setSize(100,100);
+        newGameBtn.addActionListener(event -> onNewGameClicked(frame, menu, newGameBtn));
+        menu.add(newGameBtn);
+        add(menu);
         
         int x = ((NUM_ROWS*2) + 1) * TILE_SIZE;
         int y = ((NUM_COLS*2) + 1) * TILE_SIZE;
@@ -98,7 +115,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
                     clpath.setSize(TILE_SIZE,TILE_SIZE);
                     clpath.setLocation(TILE_SIZE*j,TILE_SIZE*i);
                     myPath.add(clpath);
-                    pane.add(clpath);
+                    add(clpath);
                 }
             }
         }
@@ -106,10 +123,12 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         playerSprite = new JLabel(new ImageIcon("icons//Player_Standing_1.png"));
         playerSprite.setSize(TILE_SIZE,TILE_SIZE);
         playerSprite.setLocation(TILE_SIZE, TILE_SIZE - (TILE_SIZE/4));
-        pane.add(playerSprite, 0);
+        add(playerSprite, 0);
+        frame.setContentPane(this);
         
-        myMaze.addPropertyChangeListener(pane);
-        frame.setContentPane(pane);
+        myMaze.addPropertyChangeListener(this);
+       
+      
         
         
 //        File soundFile = new File("music//CloudyDaze.wav");
@@ -127,6 +146,14 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         
     }
     
+    private void onNewGameClicked(JFrame frame, JPanel menu, JButton button) {
+    	frame.addKeyListener(this);
+    	remove(menu);
+    	menu.remove(button);
+    	requestFocus();
+    }
+    
+  
     @Override
     public void paintComponent(final Graphics theGraphics) {
         super.paintComponent(theGraphics);
@@ -241,82 +268,78 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         updatePlayer(myTime);
         repaint();
     }
-
-    private static class MazeFrame extends JFrame implements KeyListener {
-        
-        public MazeFrame(String theTitle) {
-            super(theTitle);
+    
+    public Vertex findVert(HashSet<Edge> edges, Direction theDir) {
+        Vertex returnMe = null;
+        for (Edge c : edges) {
+            if (c.myDir == theDir) return c.end;
         }
-        
-        public Vertex findVert(HashSet<Edge> edges, Direction theDir) {
-            Vertex returnMe = null;
-            for (Edge c : edges) {
-                if (c.myDir == theDir) return c.end;
-            }
-            return returnMe;
-        }
-        
-        public void printEnum(HashSet<Direction> dirs) { //Used for testing.
-            StringBuilder sb = new StringBuilder();
-            for(Direction dir: dirs) {
-                if (dir.equals(Direction.DOWN)) {
-                    sb.append("Down ");
-                } else if (dir.equals(Direction.UP)) {
-                    sb.append("Up ");
-                } else if (dir.equals(Direction.RIGHT)) {
-                    sb.append("Right ");
-                } else if (dir.equals(Direction.LEFT)) {
-                    sb.append("Left ");
-                }
-            }
-            System.out.println(sb.toString());
-        }
-
-        @Override
-        public void keyPressed(KeyEvent e) {
-            Player myPlayer = myMaze.getPlayer();
-            if(!myPlayer.isMoving()) {
-                Vertex curLocation = myPlayer.getVertex();
-                HashSet<Edge> curEdges = curLocation.getEdges();
-                HashSet<Direction> validDirections = new HashSet<Direction>();
-                for (Edge c : curEdges) {
-                    validDirections.add(c.myDir);
-                }
-                System.out.println("Current Vertex: " + curLocation.getRow() + "," + curLocation.getCol());
-                printEnum(validDirections);
-                System.out.print('\n');
-                int keyCode = e.getKeyCode();
-                if ((keyCode == 38) && (validDirections.contains(Direction.UP))) {
-                    myPlayer.setDirection(Direction.UP);
-                    Vertex next = findVert(curEdges, Direction.UP);
-                    myPlayer.setPosition(next);
-                    System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
-                } else if ((keyCode == 40) && (validDirections.contains(Direction.DOWN))) {
-                    myPlayer.setDirection(Direction.DOWN);
-                    Vertex next = findVert(curEdges, Direction.DOWN);
-                    myPlayer.setPosition(next);
-                    System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
-                } else if ((keyCode == 39) && (validDirections.contains(Direction.RIGHT))) {
-                    myPlayer.setDirection(Direction.RIGHT);
-                    Vertex next = findVert(curEdges, Direction.RIGHT);
-                    System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
-                    myPlayer.setPosition(next);
-                } else if ((keyCode == 37) && (validDirections.contains(Direction.LEFT))) {
-                    myPlayer.setDirection(Direction.LEFT);
-                    Vertex next = findVert(curEdges, Direction.LEFT);
-                    myPlayer.setPosition(next);
-                    System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
-                }
+        return returnMe;
+    }
+    
+    public void printEnum(HashSet<Direction> dirs) { //Used for testing.
+        StringBuilder sb = new StringBuilder();
+        for(Direction dir: dirs) {
+            if (dir.equals(Direction.DOWN)) {
+                sb.append("Down ");
+            } else if (dir.equals(Direction.UP)) {
+                sb.append("Up ");
+            } else if (dir.equals(Direction.RIGHT)) {
+                sb.append("Right ");
+            } else if (dir.equals(Direction.LEFT)) {
+                sb.append("Left ");
             }
         }
+        System.out.println(sb.toString());
+    }
 
-        @Override
-        public void keyReleased(KeyEvent e) {
-        }
-        
-        
-        @Override
-        public void keyTyped(KeyEvent e) {
+	@Override
+	public void keyTyped(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+    public void keyPressed(KeyEvent e) {
+        Player myPlayer = myMaze.getPlayer();
+        if(!myPlayer.isMoving()) {
+            Vertex curLocation = myPlayer.getVertex();
+            HashSet<Edge> curEdges = curLocation.getEdges();
+            HashSet<Direction> validDirections = new HashSet<Direction>();
+            for (Edge c : curEdges) {
+                validDirections.add(c.myDir);
+            }
+            System.out.println("Current Vertex: " + curLocation.getRow() + "," + curLocation.getCol());
+            printEnum(validDirections);
+            System.out.print('\n');
+            int keyCode = e.getKeyCode();
+            if ((keyCode == 38) && (validDirections.contains(Direction.UP))) {
+                myPlayer.setDirection(Direction.UP);
+                Vertex next = findVert(curEdges, Direction.UP);
+                myPlayer.setPosition(next);
+                System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
+            } else if ((keyCode == 40) && (validDirections.contains(Direction.DOWN))) {
+                myPlayer.setDirection(Direction.DOWN);
+                Vertex next = findVert(curEdges, Direction.DOWN);
+                myPlayer.setPosition(next);
+                System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
+            } else if ((keyCode == 39) && (validDirections.contains(Direction.RIGHT))) {
+                myPlayer.setDirection(Direction.RIGHT);
+                Vertex next = findVert(curEdges, Direction.RIGHT);
+                System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
+                myPlayer.setPosition(next);
+            } else if ((keyCode == 37) && (validDirections.contains(Direction.LEFT))) {
+                myPlayer.setDirection(Direction.LEFT);
+                Vertex next = findVert(curEdges, Direction.LEFT);
+                myPlayer.setPosition(next);
+                System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
+            }
         }
     }
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
 }

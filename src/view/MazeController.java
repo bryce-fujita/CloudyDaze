@@ -45,12 +45,14 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
     private static Maze myMaze;
     private static JLabel playerSprite;
     private List<JLabel> myClouds;
+    private static List<JLabel> myCoins;
     private int move;
     private Timer myTimer;
     private int myTime;
 
     public MazeController() {
         myClouds = new ArrayList<>();
+        myCoins = new ArrayList<>();
         myPath = new ArrayList<>();
         myTimer = new Timer(TIMER_DELAY, this);
         myTimer.start();
@@ -80,7 +82,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         int y = ((NUM_COLS*2) + 1) * TILE_SIZE;
 
         frame.setSize(y + 15, x + 38);
-        
+
         for(int i = 0; i < (NUM_ROWS*2) + 1; i++) {
             for(int j = 0; j < (NUM_COLS*2) + 1; j++) { 
                 if (cMatrix[i][j] == ' ' || cMatrix[i][j] == '+') {
@@ -93,13 +95,15 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
             }
         }
 
-        // Add coins to random clouds - Needs movement implemented
+        // Add coins to random clouds
         for(int i = 0; i < 6; i ++) {
             JLabel coin = new JLabel(new ImageIcon("icons//Coin.png"));
-            coin.setSize(TILE_SIZE-5, TILE_SIZE-5);
+            coin.setSize(TILE_SIZE, TILE_SIZE);
             Random rand = new Random();
-            coin.setLocation(myPath.get(rand.nextInt(myPath.size())).getLocation());
+            Point loc = myPath.get(rand.nextInt(myPath.size())).getLocation();
+            coin.setLocation(loc.x, loc.y);
             pane.add(coin, 0);
+            myCoins.add(coin);
         }
         
         playerSprite = new JLabel(new ImageIcon("icons//Player_Standing_1.png"));
@@ -167,11 +171,19 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
             for(JLabel path : myPath) {
                 path.setIcon(new ImageIcon("icons//CloudTile.png"));
                 path.setLocation(path.getLocation().x, path.getLocation().y-1);
-            } 
+            }
+            for(JLabel coins : myCoins) {
+                coins.setIcon(new ImageIcon("icons//Coin.png"));
+                coins.setLocation(coins.getLocation().x, coins.getLocation().y-1);
+            }
         } else if ((mod >= 5) && (mod >=8)) {
             for (JLabel path : myPath) {
                 path.setIcon(new ImageIcon("icons//CloudTile2.png"));
                 path.setLocation(path.getLocation().x, path.getLocation().y + 1);
+            }
+            for(JLabel coins : myCoins) {
+                coins.setIcon(new ImageIcon("icons//Coin.png"));
+                coins.setLocation(coins.getLocation().x, coins.getLocation().y + 1);
             }
         }
     }

@@ -26,6 +26,10 @@ public abstract class Item {
         return type;
     }
     
+    public String getIcon() {
+        return imgIcon;
+    }
+    
     protected void remove() {
         location.setItem(null);
     }

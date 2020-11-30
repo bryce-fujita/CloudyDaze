@@ -6,6 +6,10 @@ import static logic.PropertyChangeEnabledPlayer.PROPERTY_SCORE;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -13,8 +17,11 @@ import java.util.Random;
 
 import logic.Coin;
 import logic.Direction;
+import logic.Enemy;
 import logic.Item;
 import logic.Player;
+
+import org.sqlite.SQLiteDataSource;
 
 public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
     
@@ -306,6 +313,53 @@ public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
             Vertex location = myMatrix[(int) rowLoc][(int) colLoc];
             location.setItem(new Coin(location));
         }
+        //FILLING ENEMIES USING SQLITE
+        
+        SQLiteDataSource ds = null;
+        
+        try {
+            ds = new SQLiteDataSource();
+            ds.setUrl("jdbc:sqlite:trivia.db");
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(0);
+        }
+        
+        System.out.println("Opened database successfully!");
+        String query = "SELECT * FROM trivia";
+        
+        try ( Connection conn = ds.getConnection();
+                Statement stmt = conn.createStatement(); ) {
+              
+              ResultSet rs = stmt.executeQuery(query);
+              
+              //walk through each 'row' of results, grab data by column/field name
+              // and print it
+              while ( rs.next() && !indexAvailable.isEmpty()) {
+                  String value = rs.getString( "VALUE" );
+                  String img = rs.getString("ICON");
+                  String question = rs.getString( "QUESTION" );
+                  String answer = rs.getString( "ANSWER" );
+                  String w1 = rs.getString("WRONG1");
+                  String w2 = rs.getString("WRONG2");
+                  String w3 = rs.getString("WRONG3");
+                  final int randomIndex = rand.nextInt(indexAvailable.size());
+                  final int arrayIndex = indexAvailable.get(randomIndex);
+                  indexAvailable.remove(randomIndex);
+                  final double rowLoc;
+                  if (arrayIndex % numRows == 0) {
+                      rowLoc = arrayIndex / numCols;
+                  } else {
+                      rowLoc = Math.ceil(arrayIndex / numCols);
+                  }
+                  final double colLoc = arrayIndex % numCols;
+                  Vertex location = myMatrix[(int) rowLoc][(int) colLoc];
+                  location.setItem(new Enemy(location,Integer.parseInt(value), img, question, answer, w1, w2, w3));
+              }
+          } catch ( SQLException e ) {
+              e.printStackTrace();
+              System.exit( 0 );
+          }
     }
 
     /**

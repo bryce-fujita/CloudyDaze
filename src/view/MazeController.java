@@ -54,7 +54,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
      */
     private static final long serialVersionUID = -9220529195101333347L;
     private static List<JLabel> myPath;
-    private static List<JLabel> myCoins;
+    private static List<JLabel> myItems;
     private static Maze myMaze;
     private static JLabel playerSprite;
     private static JLabel scoreLabel;
@@ -65,7 +65,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
 
     public MazeController() {
         myClouds = new ArrayList<>();
-        myCoins = new ArrayList<>();
+        myItems = new ArrayList<>();
         myPath = new ArrayList<>();
         myTimer = new Timer(TIMER_DELAY, this);
         myTimer.start();
@@ -129,6 +129,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
                 }
             }
         }
+        
         scoreLabel = new JLabel("Score: 0");
         scoreLabel.setSize(TILE_SIZE*6,TILE_SIZE);
         scoreLabel.setLocation(frame.getWidth()-(TILE_SIZE*5), 0);
@@ -146,24 +147,22 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
     private static void drawItems(JPanel pane) {
         //Draws items onto path (Coins or Enemies)
         removeItems(pane);
-        myCoins.clear();
+        myItems.clear();
         List<Vertex> items = myMaze.getItemLocations();
         for (int i = 0; i < items.size(); i++) {
             Item item = items.get(i).getItem();
-            if (item.getType() == "Coin") {
-                int row = items.get(i).getRow();
-                int col = items.get(i).getCol();
-                JLabel itemlb = new JLabel(new ImageIcon("icons//Coin.png"));
-                itemlb.setSize(TILE_SIZE,TILE_SIZE);
-                itemlb.setLocation(TILE_SIZE*2*(col+1)-TILE_SIZE,TILE_SIZE*2*(row+1)-TILE_SIZE);
-                myCoins.add(itemlb);
-                pane.add(itemlb, 0);
-            }
+            int row = items.get(i).getRow();
+            int col = items.get(i).getCol();
+            JLabel itemlb = new JLabel(new ImageIcon(item.getIcon() + ".png"));
+            itemlb.setSize(TILE_SIZE,TILE_SIZE);
+            itemlb.setLocation(TILE_SIZE*2*(col+1)-TILE_SIZE,TILE_SIZE*2*(row+1)-TILE_SIZE);
+            myItems.add(itemlb);
+            pane.add(itemlb, 0);
         }
     }
     
     private static void removeItems(JPanel pane) {
-        for (JLabel it : myCoins) {
+        for (JLabel it : myItems) {
             pane.remove(it);
         }
     }
@@ -187,18 +186,16 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
                 path.setIcon(new ImageIcon("icons//CloudTile.png"));
                 path.setLocation(path.getLocation().x, path.getLocation().y-1);
             }
-            for(JLabel coins : myCoins) {
-                coins.setIcon(new ImageIcon("icons//Coin.png"));
-                coins.setLocation(coins.getLocation().x, coins.getLocation().y-1);
+            for(JLabel item : myItems) {
+                item.setLocation(item.getLocation().x, item.getLocation().y-1);
             }
         } else if ((mod >= 5) && (mod >=8)) {
             for (JLabel path : myPath) {
                 path.setIcon(new ImageIcon("icons//CloudTile2.png"));
                 path.setLocation(path.getLocation().x, path.getLocation().y + 1);
             }
-            for(JLabel coins : myCoins) {
-                coins.setIcon(new ImageIcon("icons//Coin.png"));
-                coins.setLocation(coins.getLocation().x, coins.getLocation().y + 1);
+            for(JLabel item : myItems) {
+                item.setLocation(item.getLocation().x, item.getLocation().y + 1);
             }
         }
     }

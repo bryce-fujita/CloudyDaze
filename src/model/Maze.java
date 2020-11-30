@@ -7,17 +7,27 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
 
+import logic.Coin;
 import logic.Direction;
+import logic.Item;
 import logic.Player;
 
 public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
+    
+    /** The percentage used to determine the number of coins. **/
+    private static int coinPerc = 10; // EX 10 = 10%
     
     /** The number of rows in the maze. */
     private int numRows;
     
     /** The number of columns in the maze. */
     private int numCols;
+    
+    /** The number of points the player has. */
+    private int myScore;
     
     /** A 2D array to store all of the vertices. */
     private Vertex [][] myMatrix;
@@ -30,6 +40,7 @@ public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
     
     /** A class used to keep track of the players current status. */
     private Player myPlayer;
+    
 
     /** 
      * Constructor for Maze Model.
@@ -40,10 +51,12 @@ public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
     public Maze(int rows, int cols, boolean debug) {
         numRows = rows;
         numCols = cols;
+        myScore = 0;
         myPcs = new PropertyChangeSupport(this);
         myMatrix = new Vertex[rows][cols];
         constructMatrix();
         findPath();
+        fillItemsMatrix();
         myCharMatrix = makeXMatrix();
         myPlayer = new Player();
         myPlayer.addPropertyChangeListener(this);
@@ -265,12 +278,36 @@ public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
         System.out.println(sb.toString());
         return xMatrix;
     }
+    
+    public void fillItemsMatrix() {
+        final int numSpots = numRows * numCols;
+        final List<Integer> indexAvailable = new ArrayList<>();
+        final Random rand = new Random();
+        for (int i = 0; i < numSpots; i++) {
+            indexAvailable.add(i);
+        }
+        int numCoins = numSpots/coinPerc;
+        for (int i = 0; i < numCoins; i++) {
+            final int randomIndex = rand.nextInt(indexAvailable.size());
+            final int arrayIndex = indexAvailable.get(randomIndex);
+            indexAvailable.remove(randomIndex);
+            final double rowLoc;
+            if (arrayIndex % numRows == 0) {
+                rowLoc = arrayIndex / numCols;
+            } else {
+                rowLoc = Math.ceil(arrayIndex / numCols);
+            }
+            final double colLoc = arrayIndex % numCols;
+            Vertex location = myMatrix[(int) rowLoc][(int) colLoc];
+            location.setItem(new Coin(location));
+        }
+    }
 
     /**
      * Allows access to the character array.
      * @return Returns character array
      */
-    public char[][] getMatrix() {
+    public char[][] getCharMatrix() {
         return myCharMatrix;
     }
     

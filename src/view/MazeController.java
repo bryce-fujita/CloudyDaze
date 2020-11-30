@@ -74,9 +74,6 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         MazeFrame frame = new MazeFrame("Maze Game");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
-        myMaze = new Maze(NUM_ROWS, NUM_COLS, true);
-        char[][] cMatrix = myMaze.getMatrix();
-        
         
         //Create and set up the content pane.
         final MazeController pane = new MazeController();
@@ -85,6 +82,29 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         frame.pack();
         frame.setVisible(true);
         frame.addKeyListener(frame);
+        
+        //New maze//
+        myMaze = new Maze(NUM_ROWS, NUM_COLS, true);
+        
+        loadMaze(myMaze, pane, frame);
+//        File soundFile = new File("music//CloudyDaze.wav");
+//        try { AudioInputStream in
+//            = AudioSystem.getAudioInputStream(soundFile); Clip clip =
+//            AudioSystem.getClip(); clip.open(in); clip.start();
+//            clip.loop(Clip.LOOP_CONTINUOUSLY);
+//        } catch (UnsupportedAudioFileException e) {
+//            e.printStackTrace();
+//        } catch (IOException e) { 
+//            e.printStackTrace();
+//        } catch (LineUnavailableException e) {
+//            e.printStackTrace();
+//        }
+        
+    }
+    
+    private static void loadMaze(Maze theMaze, MazeController pane, JFrame frame) {
+        //reset();
+        char[][] cMatrix = theMaze.getCharMatrix();
         
         int x = ((NUM_ROWS*2) + 1) * TILE_SIZE;
         int y = ((NUM_COLS*2) + 1) * TILE_SIZE;
@@ -108,23 +128,8 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         playerSprite.setLocation(TILE_SIZE, TILE_SIZE - (TILE_SIZE/4));
         pane.add(playerSprite, 0);
         
-        myMaze.addPropertyChangeListener(pane);
+        theMaze.addPropertyChangeListener(pane);
         frame.setContentPane(pane);
-        
-        
-//        File soundFile = new File("music//CloudyDaze.wav");
-//        try { AudioInputStream in
-//            = AudioSystem.getAudioInputStream(soundFile); Clip clip =
-//            AudioSystem.getClip(); clip.open(in); clip.start();
-//            clip.loop(Clip.LOOP_CONTINUOUSLY);
-//        } catch (UnsupportedAudioFileException e) {
-//            e.printStackTrace();
-//        } catch (IOException e) { 
-//            e.printStackTrace();
-//        } catch (LineUnavailableException e) {
-//            e.printStackTrace();
-//        }
-        
     }
     
     @Override

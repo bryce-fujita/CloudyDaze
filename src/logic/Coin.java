@@ -6,7 +6,7 @@ public class Coin extends Item {
     
     
     public Coin(Vertex location) {
-        super(5, "icons/coin", "Coin", location);
+        super(5, "", "Coin", location);
     }
     
     @Override

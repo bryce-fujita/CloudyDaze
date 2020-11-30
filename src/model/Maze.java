@@ -335,6 +335,19 @@ public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
         return myPlayer;
     }
     
+    public List<Vertex> getItemLocations() {
+        List<Vertex> returnMe = new ArrayList<>();
+        for (int i = 0; i < numRows; i++) {
+            for (int j = 0; j < numCols; j++) {
+                Vertex location = myMatrix[i][j];
+                if (location.getItem() != null) {
+                    returnMe.add(location);
+                }
+            }
+        }
+        return returnMe;
+    }
+    
     @Override
     public void addPropertyChangeListener(PropertyChangeListener theListener) {
         myPcs.addPropertyChangeListener(theListener);

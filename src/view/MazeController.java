@@ -31,6 +31,7 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 
 import logic.Direction;
+import logic.Item;
 import logic.Player;
 import model.Maze;
 import model.Vertex;
@@ -53,6 +54,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
      */
     private static final long serialVersionUID = -9220529195101333347L;
     private static List<JLabel> myPath;
+    private static List<JLabel> myCoins;
     private static Maze myMaze;
     private static JLabel playerSprite;
     private List<JLabel> myClouds;
@@ -62,6 +64,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
 
     public MazeController() {
         myClouds = new ArrayList<>();
+        myCoins = new ArrayList<>();
         myPath = new ArrayList<>();
         myTimer = new Timer(TIMER_DELAY, this);
         myTimer.start();
@@ -99,7 +102,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
 //        } catch (LineUnavailableException e) {
 //            e.printStackTrace();
 //        }
-        
+        System.out.println("Maze Loaded");
     }
     
     private static void loadMaze(Maze theMaze, MazeController pane, JFrame frame) {
@@ -111,6 +114,23 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
 
         frame.setSize(y + 15, x + 38);
         
+        
+        //Draws items onto path (Coins or Enemies)
+        List<Vertex> items = theMaze.getItemLocations();
+        for (int i = 0; i < items.size(); i++) {
+            Item item = items.get(i).getItem();
+            if (item.getType() == "Coin") {
+                int row = items.get(i).getRow();
+                int col = items.get(i).getCol();
+                JLabel itemlb = new JLabel(new ImageIcon("icons//Coin.png"));
+                itemlb.setSize(TILE_SIZE,TILE_SIZE);
+                itemlb.setLocation(TILE_SIZE*2*(col+1)-TILE_SIZE,TILE_SIZE*2*(row+1)-TILE_SIZE);
+                myCoins.add(itemlb);
+                pane.add(itemlb);
+            }
+        }
+        
+        //Draws out path
         for(int i = 0; i < (NUM_ROWS*2) + 1; i++) {
             for(int j = 0; j < (NUM_COLS*2) + 1; j++) { 
                 if (cMatrix[i][j] == ' ' || cMatrix[i][j] == '+') {
@@ -122,6 +142,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
                 }
             }
         }
+        
         
         playerSprite = new JLabel(new ImageIcon("icons//Player_Standing_1.png"));
         playerSprite.setSize(TILE_SIZE,TILE_SIZE);

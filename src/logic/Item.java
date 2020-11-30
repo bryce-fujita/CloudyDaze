@@ -22,6 +22,10 @@ public abstract class Item {
         return 0;
     }
     
+    public String getType() {
+        return type;
+    }
+    
     protected void remove() {
         location.setItem(null);
     }

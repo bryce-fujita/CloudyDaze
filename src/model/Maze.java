@@ -1,6 +1,7 @@
 package model;
 
 import static logic.PropertyChangeEnabledPlayer.PROPERTY_POSITION;
+import static logic.PropertyChangeEnabledPlayer.PROPERTY_SCORE;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -60,7 +61,8 @@ public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
         myCharMatrix = makeXMatrix();
         myPlayer = new Player();
         myPlayer.addPropertyChangeListener(this);
-        myPlayer.setPosition(myMatrix[0][0]);
+        myPlayer.setMove(myMatrix[0][0]);
+        
     }
 
     /**
@@ -283,9 +285,12 @@ public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
         final int numSpots = numRows * numCols;
         final List<Integer> indexAvailable = new ArrayList<>();
         final Random rand = new Random();
-        for (int i = 0; i < numSpots; i++) {
+        for (int i = 0; i < numSpots; i++) {  //by filtering out available locations, we can guarantee we won't have repeated locations
             indexAvailable.add(i);
         }
+        //Needed to remove first and list index since this is the starting and ending location.
+        indexAvailable.remove(indexAvailable.size()-1);// last location.
+        indexAvailable.remove(0);// first location
         int numCoins = numSpots/coinPerc;
         for (int i = 0; i < numCoins; i++) {
             final int randomIndex = rand.nextInt(indexAvailable.size());
@@ -376,6 +381,9 @@ public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
     public void propertyChange(PropertyChangeEvent evt) {
         if (PROPERTY_POSITION.equals(evt.getPropertyName())) {
             myPcs.firePropertyChange(PROPERTY_PLAYER, null, null);
+        } else if(PROPERTY_SCORE.equals(evt.getPropertyName())) {
+            myScore += (Integer) evt.getNewValue();
+            myPcs.firePropertyChange(PROPERTY_SCORED, null, myScore);
         }
     }
 }

@@ -38,9 +38,14 @@ public class Player implements PropertyChangeEnabledPlayer {
         return myDir;
     }
     
-    public void setPosition(Vertex theVertex) {
+    public void setMove(Vertex theVertex) {
         myPcs.firePropertyChange(PROPERTY_POSITION, null, null);
         myVertex = theVertex;
+        System.out.println(theVertex.getItem());
+        if(theVertex.getItem() != null && theVertex.getItem().getType().equals("Coin")) {
+            int value = theVertex.getItem().itemAction();
+            myPcs.firePropertyChange(PROPERTY_SCORE, null, value);
+        }
     }
     
     public Vertex getVertex() {

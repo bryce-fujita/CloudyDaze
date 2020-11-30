@@ -28,7 +28,7 @@ public interface PropertyChangeEnabledMaze {
     /**
      * A property name for the current time being changed;
      */
-    String PROPERTY_TIME = "it could be nonsensecele";
+    String PROPERTY_SCORED = "it could be nonsensecele";
     
     /**
      * A property name for the current time being changed;

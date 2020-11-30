@@ -1,6 +1,6 @@
 package view;
 
-import static model.PropertyChangeEnabledMaze.PROPERTY_TIME;
+import static model.PropertyChangeEnabledMaze.PROPERTY_SCORED;
 import static model.PropertyChangeEnabledMaze.PROPERTY_PLAYER;
 
 import java.awt.Color;
@@ -57,6 +57,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
     private static List<JLabel> myCoins;
     private static Maze myMaze;
     private static JLabel playerSprite;
+    private static JLabel scoreLabel;
     private List<JLabel> myClouds;
     private int move;
     private Timer myTimer;
@@ -103,6 +104,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
 //            e.printStackTrace();
 //        }
         System.out.println("Maze Loaded");
+        drawItems(pane);
     }
     
     private static void loadMaze(Maze theMaze, MazeController pane, JFrame frame) {
@@ -114,21 +116,6 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
 
         frame.setSize(y + 15, x + 38);
         
-        
-        //Draws items onto path (Coins or Enemies)
-        List<Vertex> items = theMaze.getItemLocations();
-        for (int i = 0; i < items.size(); i++) {
-            Item item = items.get(i).getItem();
-            if (item.getType() == "Coin") {
-                int row = items.get(i).getRow();
-                int col = items.get(i).getCol();
-                JLabel itemlb = new JLabel(new ImageIcon("icons//Coin.png"));
-                itemlb.setSize(TILE_SIZE,TILE_SIZE);
-                itemlb.setLocation(TILE_SIZE*2*(col+1)-TILE_SIZE,TILE_SIZE*2*(row+1)-TILE_SIZE);
-                myCoins.add(itemlb);
-                pane.add(itemlb);
-            }
-        }
         
         //Draws out path
         for(int i = 0; i < (NUM_ROWS*2) + 1; i++) {
@@ -142,8 +129,11 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
                 }
             }
         }
-        
-        
+        scoreLabel = new JLabel("Score: 0");
+        scoreLabel.setSize(TILE_SIZE*6,TILE_SIZE);
+        scoreLabel.setLocation(frame.getWidth()-(TILE_SIZE*5), 0);
+        scoreLabel.setFont(scoreLabel.getFont().deriveFont(TILE_SIZE - 5.0f));
+        pane.add(scoreLabel, 0);
         playerSprite = new JLabel(new ImageIcon("icons//Player_Standing_1.png"));
         playerSprite.setSize(TILE_SIZE,TILE_SIZE);
         playerSprite.setLocation(TILE_SIZE, TILE_SIZE - (TILE_SIZE/4));
@@ -151,6 +141,31 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         
         theMaze.addPropertyChangeListener(pane);
         frame.setContentPane(pane);
+    }
+    
+    private static void drawItems(JPanel pane) {
+        //Draws items onto path (Coins or Enemies)
+        removeItems(pane);
+        myCoins.clear();
+        List<Vertex> items = myMaze.getItemLocations();
+        for (int i = 0; i < items.size(); i++) {
+            Item item = items.get(i).getItem();
+            if (item.getType() == "Coin") {
+                int row = items.get(i).getRow();
+                int col = items.get(i).getCol();
+                JLabel itemlb = new JLabel(new ImageIcon("icons//Coin.png"));
+                itemlb.setSize(TILE_SIZE,TILE_SIZE);
+                itemlb.setLocation(TILE_SIZE*2*(col+1)-TILE_SIZE,TILE_SIZE*2*(row+1)-TILE_SIZE);
+                myCoins.add(itemlb);
+                pane.add(itemlb, 0);
+            }
+        }
+    }
+    
+    private static void removeItems(JPanel pane) {
+        for (JLabel it : myCoins) {
+            pane.remove(it);
+        }
     }
     
     @Override
@@ -171,12 +186,20 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
             for(JLabel path : myPath) {
                 path.setIcon(new ImageIcon("icons//CloudTile.png"));
                 path.setLocation(path.getLocation().x, path.getLocation().y-1);
-            } 
+            }
+            for(JLabel coins : myCoins) {
+                coins.setIcon(new ImageIcon("icons//Coin.png"));
+                coins.setLocation(coins.getLocation().x, coins.getLocation().y-1);
+            }
         } else if ((mod >= 5) && (mod >=8)) {
-            for(JLabel path : myPath) {
+            for (JLabel path : myPath) {
                 path.setIcon(new ImageIcon("icons//CloudTile2.png"));
-                path.setLocation(path.getLocation().x, path.getLocation().y+1);
-            } 
+                path.setLocation(path.getLocation().x, path.getLocation().y + 1);
+            }
+            for(JLabel coins : myCoins) {
+                coins.setIcon(new ImageIcon("icons//Coin.png"));
+                coins.setLocation(coins.getLocation().x, coins.getLocation().y + 1);
+            }
         }
     }
     
@@ -240,11 +263,13 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
 
     @Override
     public void propertyChange(PropertyChangeEvent theEvent) {
-        if (PROPERTY_TIME.equals(theEvent.getPropertyName())) {
-
-        } else if(PROPERTY_PLAYER.equals(theEvent.getPropertyName())) {
+        if(PROPERTY_PLAYER.equals(theEvent.getPropertyName())) {
             Player player = myMaze.getPlayer();
             player.setMoving(true);
+        } else if(PROPERTY_SCORED.equals(theEvent.getPropertyName())) {
+            System.out.println("The player has scored points");
+            drawItems(this);
+            scoreLabel.setText("Score: " + (Integer) theEvent.getNewValue());
         }
     }
     
@@ -269,7 +294,6 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
     }
 
     private static class MazeFrame extends JFrame implements KeyListener {
-        
         public MazeFrame(String theTitle) {
             super(theTitle);
         }
@@ -315,22 +339,22 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
                 if ((keyCode == 38) && (validDirections.contains(Direction.UP))) {
                     myPlayer.setDirection(Direction.UP);
                     Vertex next = findVert(curEdges, Direction.UP);
-                    myPlayer.setPosition(next);
+                    myPlayer.setMove(next);
                     System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
                 } else if ((keyCode == 40) && (validDirections.contains(Direction.DOWN))) {
                     myPlayer.setDirection(Direction.DOWN);
                     Vertex next = findVert(curEdges, Direction.DOWN);
-                    myPlayer.setPosition(next);
+                    myPlayer.setMove(next);
                     System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
                 } else if ((keyCode == 39) && (validDirections.contains(Direction.RIGHT))) {
                     myPlayer.setDirection(Direction.RIGHT);
                     Vertex next = findVert(curEdges, Direction.RIGHT);
                     System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
-                    myPlayer.setPosition(next);
+                    myPlayer.setMove(next);
                 } else if ((keyCode == 37) && (validDirections.contains(Direction.LEFT))) {
                     myPlayer.setDirection(Direction.LEFT);
                     Vertex next = findVert(curEdges, Direction.LEFT);
-                    myPlayer.setPosition(next);
+                    myPlayer.setMove(next);
                     System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
                 }
             }

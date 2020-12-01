@@ -3,6 +3,7 @@ package Application;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
+import model.Maze;
 import view.MazeController;
 
 public class Main {

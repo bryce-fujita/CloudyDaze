@@ -4,6 +4,7 @@ import static model.PropertyChangeEnabledMaze.PROPERTY_TIME;
 import static model.PropertyChangeEnabledMaze.PROPERTY_PLAYER;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -49,6 +50,8 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
     private int move;
     private Timer myTimer;
     private int myTime;
+    private static int myScore;
+    private static JLabel theScore;
 
     public MazeController() {
         myClouds = new ArrayList<>();
@@ -96,7 +99,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         }
 
         // Add coins to random clouds
-        for(int i = 0; i < 6; i ++) {
+        for(int i = 0; i < 15; i ++) {
             JLabel coin = new JLabel(new ImageIcon("icons//Coin.png"));
             coin.setSize(TILE_SIZE, TILE_SIZE);
             Random rand = new Random();
@@ -105,6 +108,8 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
             pane.add(coin, 0);
             myCoins.add(coin);
         }
+        System.out.println(myCoins.toString());
+        
         
         playerSprite = new JLabel(new ImageIcon("icons//Player_Standing_1.png"));
         playerSprite.setSize(TILE_SIZE,TILE_SIZE);
@@ -113,6 +118,16 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         
         myMaze.addPropertyChangeListener(pane);
         frame.setContentPane(pane);
+        
+        
+        // Creating Score Text
+        Font myFont = new Font("Arial", Font.BOLD, 18);
+        theScore = new JLabel();
+        theScore.setLocation(x - 100, -10);
+        theScore.setSize(150, 50);
+        theScore.setFont(myFont);
+        theScore.setForeground(Color.WHITE);
+        frame.add(theScore, 0);
 
         // Adding a menu bar
         JMenuBar menubar = new JMenuBar();
@@ -137,6 +152,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         menu.add(loadGame);
         menubar.add(menu);
         frame.setJMenuBar(menubar);
+        
         
 //        File soundFile = new File("music//CloudyDaze.wav");
 //        try { AudioInputStream in
@@ -244,6 +260,20 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
             playerSprite.setLocation(pos.x-1, pos.y);
         }
     }
+    
+    private void updateScore() {
+    	boolean found = false;
+        for(JLabel loc : myCoins) {
+        	found = playerSprite.getLocation().equals(loc.getLocation());
+        	//System.out.println(loc.getLocation() + "Player: " + playerSprite.getLocation());
+        	if (found) {
+        		myScore+=1;
+        		theScore.setText("Score: " + Integer.toString(myScore));
+        		myCoins.remove(loc);
+        		break;
+        	}
+        }
+    }
 
 
     @Override
@@ -273,6 +303,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         moveBClouds();
         updatePClouds(myTime);
         updatePlayer(myTime);
+        updateScore();
         repaint();
     }
 

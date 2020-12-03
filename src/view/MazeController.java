@@ -128,7 +128,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
                     pane.add(clpath);
                 }
             }
-        }
+        } 
         
         scoreLabel = new JLabel("Score: 0");
         scoreLabel.setSize(TILE_SIZE*6,TILE_SIZE);
@@ -264,7 +264,6 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
             Player player = myMaze.getPlayer();
             player.setMoving(true);
         } else if(PROPERTY_SCORED.equals(theEvent.getPropertyName())) {
-            System.out.println("The player has scored points");
             drawItems(this);
             scoreLabel.setText("Score: " + (Integer) theEvent.getNewValue());
         }

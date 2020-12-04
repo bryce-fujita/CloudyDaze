@@ -72,7 +72,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         myItems = new ArrayList<>();
         myPath = new ArrayList<>();
         playerSprite = new JLabel(new ImageIcon("icons//Player_Standing_1.png"));
-        scoreLabel = new JLabel("Score: 0");
+        scoreLabel = new JLabel();
         myTimer = new Timer(TIMER_DELAY, this);
         myTimer.start();
         myTime = 0;
@@ -100,7 +100,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         int x = ((NUM_ROWS*2) + 1) * TILE_SIZE;
         int y = ((NUM_COLS*2) + 1) * TILE_SIZE;
 
-        frame.setSize(y + 15, x + 38);
+        frame.setSize(y + 15, x + 60);
         frame.setJMenuBar(pane.buildMenuBar(frame));
 //        File soundFile = new File("music//CloudyDaze.wav");
 //        try { AudioInputStream in
@@ -185,6 +185,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         for (JLabel jl  : myPath) {
             pane.remove(jl);
         }
+        scoreLabel.setText("Score : 0");
     }
     
     private static void loadMaze(Maze theMaze, MazeController pane, JFrame frame) {
@@ -204,10 +205,6 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
             }
         } 
         
-        scoreLabel.setSize(TILE_SIZE*6,TILE_SIZE);
-        scoreLabel.setLocation(frame.getWidth()-(TILE_SIZE*5), 0);
-        scoreLabel.setFont(scoreLabel.getFont().deriveFont(TILE_SIZE - 5.0f));
-        scoreLabel.setText("Score : 0");
         playerSprite.setSize(TILE_SIZE,TILE_SIZE);
         playerSprite.setLocation(TILE_SIZE, TILE_SIZE - (TILE_SIZE/4));
         
@@ -216,6 +213,10 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         drawItems(pane);
         theMaze.addPropertyChangeListener(pane);
         frame.setContentPane(pane);
+        scoreLabel.setSize(TILE_SIZE*6,TILE_SIZE);
+        scoreLabel.setLocation(pane.getWidth()-(TILE_SIZE*5), 0);
+        scoreLabel.setFont(scoreLabel.getFont().deriveFont(TILE_SIZE - 5.0f));
+        scoreLabel.setText("Score: 0");
     }
     
     private static void drawItems(JPanel pane) {

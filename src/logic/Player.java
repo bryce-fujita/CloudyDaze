@@ -40,9 +40,8 @@ public class Player implements PropertyChangeEnabledPlayer {
     
     public void setMove(Vertex theVertex) {
         if (theVertex.getItem() == null) {
-        myPcs.firePropertyChange(PROPERTY_POSITION, null, null);
-        myVertex = theVertex;
-        System.out.println(theVertex.getItem());
+            myPcs.firePropertyChange(PROPERTY_POSITION, null, null);
+            myVertex = theVertex;
         } else {
             int value = theVertex.getItem().itemAction();
             myPcs.firePropertyChange(PROPERTY_SCORE, null, value);

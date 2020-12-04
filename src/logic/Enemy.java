@@ -58,7 +58,7 @@ public class Enemy extends Item {
         
         String s = (String) JOptionPane.showInputDialog(null, question, "Answer the question", JOptionPane.PLAIN_MESSAGE, null, posans,posans[0]);
         
-        returned = s.equals(answer) ? points : -points;
+        returned = s.equals(answer) ? points : -points; 
         
         if (returned > 0) {
             remove();

@@ -25,8 +25,13 @@ import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
@@ -47,50 +52,56 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
     
     final private static int NUM_COLS = 10;
     
-    
-
     /**
      * 
      */
     private static final long serialVersionUID = -9220529195101333347L;
     private static List<JLabel> myPath;
     private static List<JLabel> myItems;
-    private static Maze myMaze;
     private static JLabel playerSprite;
     private static JLabel scoreLabel;
-    private List<JLabel> myClouds;
+    private static List<JLabel> myClouds;
+    private static Maze myMaze;
     private int move;
     private Timer myTimer;
     private int myTime;
 
-    public MazeController() {
+    public MazeController(Maze theMaze, JFrame theFrame) {
+        myMaze = theMaze;
         myClouds = new ArrayList<>();
         myItems = new ArrayList<>();
         myPath = new ArrayList<>();
+        playerSprite = new JLabel(new ImageIcon("icons//Player_Standing_1.png"));
+        scoreLabel = new JLabel("Score: 0");
         myTimer = new Timer(TIMER_DELAY, this);
         myTimer.start();
         myTime = 0;
         move = 0;
+        drawItems(this);
+        loadMaze(myMaze, this, theFrame);
     }
     
     public static void createAndShowGUI() {
+        //New maze//
+        Maze maze = new Maze(NUM_ROWS, NUM_COLS, true);
+        
         //Create and set up the window.
         MazeFrame frame = new MazeFrame("Maze Game");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
         
         //Create and set up the content pane.
-        final MazeController pane = new MazeController();
+        final MazeController pane = new MazeController(maze, frame);
         pane.setOpaque(true); //content panes must be opaque
         pane.setLayout(null);
         frame.pack();
         frame.setVisible(true);
         frame.addKeyListener(frame);
-        
-        //New maze//
-        myMaze = new Maze(NUM_ROWS, NUM_COLS, true);
-        
-        loadMaze(myMaze, pane, frame);
+        int x = ((NUM_ROWS*2) + 1) * TILE_SIZE;
+        int y = ((NUM_COLS*2) + 1) * TILE_SIZE;
+
+        frame.setSize(y + 15, x + 38);
+        frame.setJMenuBar(pane.buildMenuBar(frame));
 //        File soundFile = new File("music//CloudyDaze.wav");
 //        try { AudioInputStream in
 //            = AudioSystem.getAudioInputStream(soundFile); Clip clip =
@@ -103,19 +114,82 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
 //        } catch (LineUnavailableException e) {
 //            e.printStackTrace();
 //        }
-        System.out.println("Maze Loaded");
-        drawItems(pane);
+    }
+    
+    /**
+     * Constructs a JMenuBar for the Frame.
+     * @return the Menu Bar
+     */
+    private JMenuBar buildMenuBar(JFrame frame) {
+        final JMenuBar bar = new JMenuBar();
+        bar.add(buildFileMenu(frame));
+        bar.add(buildHelpMenu());
+        return bar;
+    }
+    
+    /**
+     * Builds the file menu for the menu bar.
+     * 
+     * @return the File menu
+     */
+    private JMenu buildFileMenu(JFrame frame) {
+        final JMenu fileMenu = new JMenu("File");
+
+        final JMenuItem newG = new JMenuItem("New Game");
+       
+        fileMenu.add(newG);
+        fileMenu.addSeparator();
+
+        final JMenuItem exitItem = new JMenuItem("Exit");
+        
+        exitItem.addActionListener(ae -> System.exit(0));
+        newG.addActionListener(ae -> {
+            myMaze = new Maze(NUM_ROWS, NUM_COLS, true);
+            loadMaze(myMaze,this, frame);
+        });
+        
+        fileMenu.add(exitItem);
+        return fileMenu;
+    }
+    
+    /**
+     * Build the Help JMenu.
+     * 
+     * @return the Help JMenu
+     */
+    private JMenu buildHelpMenu() {
+        final JMenu helpMenu = new JMenu("Help");
+
+        final JMenuItem infoItem = new JMenuItem("Race Info...");
+        helpMenu.add(infoItem);
+        infoItem.setEnabled(false);
+
+        final JMenuItem aboutItem = new JMenuItem("About...");
+        helpMenu.add(aboutItem);
+        
+        aboutItem.addActionListener(ae ->
+                        JOptionPane.showMessageDialog(new JFrame(), "Bryce Fujita and Ruvim Radchishin\n"
+                                      + "Autumn 2020\n"
+                        + "TCSS 360", "About CloudyDaze", JOptionPane.INFORMATION_MESSAGE,
+                        null));
+        return helpMenu;
+    }
+    
+    private static void reset(JPanel pane) {
+        for (JLabel jl  : myClouds) {
+            pane.remove(jl);
+        }
+        for (JLabel jl  : myItems) {
+            pane.remove(jl);
+        }
+        for (JLabel jl  : myPath) {
+            pane.remove(jl);
+        }
     }
     
     private static void loadMaze(Maze theMaze, MazeController pane, JFrame frame) {
-        //reset();
+        reset(pane);
         char[][] cMatrix = theMaze.getCharMatrix();
-        
-        int x = ((NUM_ROWS*2) + 1) * TILE_SIZE;
-        int y = ((NUM_COLS*2) + 1) * TILE_SIZE;
-
-        frame.setSize(y + 15, x + 38);
-        
         
         //Draws out path
         for(int i = 0; i < (NUM_ROWS*2) + 1; i++) {
@@ -130,16 +204,16 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
             }
         } 
         
-        scoreLabel = new JLabel("Score: 0");
         scoreLabel.setSize(TILE_SIZE*6,TILE_SIZE);
         scoreLabel.setLocation(frame.getWidth()-(TILE_SIZE*5), 0);
         scoreLabel.setFont(scoreLabel.getFont().deriveFont(TILE_SIZE - 5.0f));
-        pane.add(scoreLabel, 0);
-        playerSprite = new JLabel(new ImageIcon("icons//Player_Standing_1.png"));
+        scoreLabel.setText("Score : 0");
         playerSprite.setSize(TILE_SIZE,TILE_SIZE);
         playerSprite.setLocation(TILE_SIZE, TILE_SIZE - (TILE_SIZE/4));
-        pane.add(playerSprite, 0);
         
+        pane.add(playerSprite, 0);
+        pane.add(scoreLabel, 0);   
+        drawItems(pane);
         theMaze.addPropertyChangeListener(pane);
         frame.setContentPane(pane);
     }
@@ -301,22 +375,6 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
             }
             return returnMe;
         }
-        
-        public void printEnum(HashSet<Direction> dirs) { //Used for testing.
-            StringBuilder sb = new StringBuilder();
-            for(Direction dir: dirs) {
-                if (dir.equals(Direction.DOWN)) {
-                    sb.append("Down ");
-                } else if (dir.equals(Direction.UP)) {
-                    sb.append("Up ");
-                } else if (dir.equals(Direction.RIGHT)) {
-                    sb.append("Right ");
-                } else if (dir.equals(Direction.LEFT)) {
-                    sb.append("Left ");
-                }
-            }
-            System.out.println(sb.toString());
-        }
 
         @Override
         public void keyPressed(KeyEvent e) {
@@ -328,30 +386,23 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
                 for (Edge c : curEdges) {
                     validDirections.add(c.myDir);
                 }
-                System.out.println("Current Vertex: " + curLocation.getRow() + "," + curLocation.getCol());
-                printEnum(validDirections);
-                System.out.print('\n');
                 int keyCode = e.getKeyCode();
                 if ((keyCode == 38) && (validDirections.contains(Direction.UP))) {
                     myPlayer.setDirection(Direction.UP);
                     Vertex next = findVert(curEdges, Direction.UP);
                     myPlayer.setMove(next);
-                    System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
                 } else if ((keyCode == 40) && (validDirections.contains(Direction.DOWN))) {
                     myPlayer.setDirection(Direction.DOWN);
                     Vertex next = findVert(curEdges, Direction.DOWN);
                     myPlayer.setMove(next);
-                    System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
                 } else if ((keyCode == 39) && (validDirections.contains(Direction.RIGHT))) {
                     myPlayer.setDirection(Direction.RIGHT);
                     Vertex next = findVert(curEdges, Direction.RIGHT);
-                    System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
                     myPlayer.setMove(next);
                 } else if ((keyCode == 37) && (validDirections.contains(Direction.LEFT))) {
                     myPlayer.setDirection(Direction.LEFT);
                     Vertex next = findVert(curEdges, Direction.LEFT);
                     myPlayer.setMove(next);
-                    System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
                 }
             }
         }

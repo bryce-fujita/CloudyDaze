@@ -1,10 +1,9 @@
 package view;
 
-import static model.PropertyChangeEnabledMaze.PROPERTY_TIME;
+import static model.PropertyChangeEnabledMaze.PROPERTY_SCORED;
 import static model.PropertyChangeEnabledMaze.PROPERTY_PLAYER;
 
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -13,14 +12,26 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
-import javax.swing.*;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.Timer;
 
 import logic.Direction;
+import logic.Item;
 import logic.Player;
 import model.Maze;
 import model.Vertex;
@@ -43,19 +54,18 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
      */
     private static final long serialVersionUID = -9220529195101333347L;
     private static List<JLabel> myPath;
+    private static List<JLabel> myItems;
     private static Maze myMaze;
     private static JLabel playerSprite;
+    private static JLabel scoreLabel;
     private List<JLabel> myClouds;
-    private static List<JLabel> myCoins;
     private int move;
     private Timer myTimer;
     private int myTime;
-    private static int myScore;
-    private static JLabel theScore;
 
     public MazeController() {
         myClouds = new ArrayList<>();
-        myCoins = new ArrayList<>();
+        myItems = new ArrayList<>();
         myPath = new ArrayList<>();
         myTimer = new Timer(TIMER_DELAY, this);
         myTimer.start();
@@ -68,9 +78,6 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         MazeFrame frame = new MazeFrame("Maze Game");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
-        myMaze = new Maze(NUM_ROWS, NUM_COLS, true);
-        char[][] cMatrix = myMaze.getMatrix();
-        
         
         //Create and set up the content pane.
         final MazeController pane = new MazeController();
@@ -79,81 +86,11 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         frame.pack();
         frame.setVisible(true);
         frame.addKeyListener(frame);
-
         
-        int x = ((NUM_ROWS*2) + 1) * TILE_SIZE;
-        int y = ((NUM_COLS*2) + 1) * TILE_SIZE;
-
-        frame.setSize(y + 15, x + 38);
-
-        for(int i = 0; i < (NUM_ROWS*2) + 1; i++) {
-            for(int j = 0; j < (NUM_COLS*2) + 1; j++) { 
-                if (cMatrix[i][j] == ' ' || cMatrix[i][j] == '+') {
-                    JLabel clpath = new JLabel(new ImageIcon("icons//CloudTile.png"));
-                    clpath.setSize(TILE_SIZE,TILE_SIZE);
-                    clpath.setLocation(TILE_SIZE*j,TILE_SIZE*i);
-                    myPath.add(clpath);
-                    pane.add(clpath);
-                }
-            }
-        }
-
-        // Add coins to random clouds
-        for(int i = 0; i < 15; i ++) {
-            JLabel coin = new JLabel(new ImageIcon("icons//Coin.png"));
-            coin.setSize(TILE_SIZE, TILE_SIZE);
-            Random rand = new Random();
-            Point loc = myPath.get(rand.nextInt(myPath.size())).getLocation();
-            coin.setLocation(loc.x, loc.y);
-            pane.add(coin, 0);
-            myCoins.add(coin);
-        }
-        System.out.println(myCoins.toString());
+        //New maze//
+        myMaze = new Maze(NUM_ROWS, NUM_COLS, true);
         
-        
-        playerSprite = new JLabel(new ImageIcon("icons//Player_Standing_1.png"));
-        playerSprite.setSize(TILE_SIZE,TILE_SIZE);
-        playerSprite.setLocation(TILE_SIZE, TILE_SIZE - (TILE_SIZE/4));
-        pane.add(playerSprite, 0);
-        
-        myMaze.addPropertyChangeListener(pane);
-        frame.setContentPane(pane);
-        
-        
-        // Creating Score Text
-        Font myFont = new Font("Arial", Font.BOLD, 18);
-        theScore = new JLabel();
-        theScore.setLocation(x - 100, -10);
-        theScore.setSize(150, 50);
-        theScore.setFont(myFont);
-        theScore.setForeground(Color.WHITE);
-        frame.add(theScore, 0);
-
-        // Adding a menu bar
-        JMenuBar menubar = new JMenuBar();
-        JMenu menu = new JMenu("Game");
-        JMenuItem newGame = new JMenuItem(new AbstractAction("New Game") {
-            public void actionPerformed(ActionEvent ae) {
-                //createAndShowGUI();
-            }
-        });
-        JMenuItem saveGame = new JMenuItem(new AbstractAction("Save Game") {
-            public void actionPerformed(ActionEvent ae) {
-                System.out.println("Save Game");
-            }
-        });
-        JMenuItem loadGame = new JMenuItem(new AbstractAction("Load Game") {
-            public void actionPerformed(ActionEvent ae) {
-                System.out.println("Load Game");
-            }
-        });
-        menu.add(newGame);
-        menu.add(saveGame);
-        menu.add(loadGame);
-        menubar.add(menu);
-        frame.setJMenuBar(menubar);
-        
-        
+        loadMaze(myMaze, pane, frame);
 //        File soundFile = new File("music//CloudyDaze.wav");
 //        try { AudioInputStream in
 //            = AudioSystem.getAudioInputStream(soundFile); Clip clip =
@@ -166,7 +103,68 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
 //        } catch (LineUnavailableException e) {
 //            e.printStackTrace();
 //        }
+        System.out.println("Maze Loaded");
+        drawItems(pane);
+    }
+    
+    private static void loadMaze(Maze theMaze, MazeController pane, JFrame frame) {
+        //reset();
+        char[][] cMatrix = theMaze.getCharMatrix();
         
+        int x = ((NUM_ROWS*2) + 1) * TILE_SIZE;
+        int y = ((NUM_COLS*2) + 1) * TILE_SIZE;
+
+        frame.setSize(y + 15, x + 38);
+        
+        
+        //Draws out path
+        for(int i = 0; i < (NUM_ROWS*2) + 1; i++) {
+            for(int j = 0; j < (NUM_COLS*2) + 1; j++) { 
+                if (cMatrix[i][j] == ' ' || cMatrix[i][j] == '+') {
+                    JLabel clpath = new JLabel(new ImageIcon("icons//CloudTile.png"));
+                    clpath.setSize(TILE_SIZE,TILE_SIZE);
+                    clpath.setLocation(TILE_SIZE*j,TILE_SIZE*i);
+                    myPath.add(clpath);
+                    pane.add(clpath);
+                }
+            }
+        } 
+        
+        scoreLabel = new JLabel("Score: 0");
+        scoreLabel.setSize(TILE_SIZE*6,TILE_SIZE);
+        scoreLabel.setLocation(frame.getWidth()-(TILE_SIZE*5), 0);
+        scoreLabel.setFont(scoreLabel.getFont().deriveFont(TILE_SIZE - 5.0f));
+        pane.add(scoreLabel, 0);
+        playerSprite = new JLabel(new ImageIcon("icons//Player_Standing_1.png"));
+        playerSprite.setSize(TILE_SIZE,TILE_SIZE);
+        playerSprite.setLocation(TILE_SIZE, TILE_SIZE - (TILE_SIZE/4));
+        pane.add(playerSprite, 0);
+        
+        theMaze.addPropertyChangeListener(pane);
+        frame.setContentPane(pane);
+    }
+    
+    private static void drawItems(JPanel pane) {
+        //Draws items onto path (Coins or Enemies)
+        removeItems(pane);
+        myItems.clear();
+        List<Vertex> items = myMaze.getItemLocations();
+        for (int i = 0; i < items.size(); i++) {
+            Item item = items.get(i).getItem();
+            int row = items.get(i).getRow();
+            int col = items.get(i).getCol();
+            JLabel itemlb = new JLabel(new ImageIcon(item.getIcon() + ".png"));
+            itemlb.setSize(TILE_SIZE,TILE_SIZE);
+            itemlb.setLocation(TILE_SIZE*2*(col+1)-TILE_SIZE,TILE_SIZE*2*(row+1)-TILE_SIZE);
+            myItems.add(itemlb);
+            pane.add(itemlb, 0);
+        }
+    }
+    
+    private static void removeItems(JPanel pane) {
+        for (JLabel it : myItems) {
+            pane.remove(it);
+        }
     }
     
     @Override
@@ -188,18 +186,16 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
                 path.setIcon(new ImageIcon("icons//CloudTile.png"));
                 path.setLocation(path.getLocation().x, path.getLocation().y-1);
             }
-            for(JLabel coins : myCoins) {
-                coins.setIcon(new ImageIcon("icons//Coin.png"));
-                coins.setLocation(coins.getLocation().x, coins.getLocation().y-1);
+            for(JLabel item : myItems) {
+                item.setLocation(item.getLocation().x, item.getLocation().y-1);
             }
         } else if ((mod >= 5) && (mod >=8)) {
             for (JLabel path : myPath) {
                 path.setIcon(new ImageIcon("icons//CloudTile2.png"));
                 path.setLocation(path.getLocation().x, path.getLocation().y + 1);
             }
-            for(JLabel coins : myCoins) {
-                coins.setIcon(new ImageIcon("icons//Coin.png"));
-                coins.setLocation(coins.getLocation().x, coins.getLocation().y + 1);
+            for(JLabel item : myItems) {
+                item.setLocation(item.getLocation().x, item.getLocation().y + 1);
             }
         }
     }
@@ -248,41 +244,28 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         Player player = myMaze.getPlayer();
         if (player.getDirection().equals(Direction.UP)) {
             Point pos = playerSprite.getLocation();
-            playerSprite.setLocation(pos.x, pos.y-1);
+            playerSprite.setLocation(pos.x, pos.y-2);
         } else if (player.getDirection().equals(Direction.DOWN)) {
             Point pos = playerSprite.getLocation();
-            playerSprite.setLocation(pos.x, pos.y+1);
+            playerSprite.setLocation(pos.x, pos.y+2);
         } else if (player.getDirection().equals(Direction.RIGHT)) {
             Point pos = playerSprite.getLocation();
-            playerSprite.setLocation(pos.x+1, pos.y);
+            playerSprite.setLocation(pos.x+2, pos.y);
         } else if (player.getDirection().equals(Direction.LEFT)) {
             Point pos = playerSprite.getLocation();
-            playerSprite.setLocation(pos.x-1, pos.y);
-        }
-    }
-    
-    private void updateScore() {
-    	boolean found = false;
-        for(JLabel loc : myCoins) {
-        	found = playerSprite.getLocation().equals(loc.getLocation());
-        	//System.out.println(loc.getLocation() + "Player: " + playerSprite.getLocation());
-        	if (found) {
-        		myScore+=1;
-        		theScore.setText("Score: " + Integer.toString(myScore));
-        		myCoins.remove(loc);
-        		break;
-        	}
+            playerSprite.setLocation(pos.x-2, pos.y);
         }
     }
 
 
     @Override
     public void propertyChange(PropertyChangeEvent theEvent) {
-        if (PROPERTY_TIME.equals(theEvent.getPropertyName())) {
-
-        } else if(PROPERTY_PLAYER.equals(theEvent.getPropertyName())) {
+        if(PROPERTY_PLAYER.equals(theEvent.getPropertyName())) {
             Player player = myMaze.getPlayer();
             player.setMoving(true);
+        } else if(PROPERTY_SCORED.equals(theEvent.getPropertyName())) {
+            drawItems(this);
+            scoreLabel.setText("Score: " + (Integer) theEvent.getNewValue());
         }
     }
     
@@ -303,17 +286,10 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         moveBClouds();
         updatePClouds(myTime);
         updatePlayer(myTime);
-        updateScore();
         repaint();
     }
 
-    public Object getRandomlocation(ArrayList pathList) {
-        Random rand = new Random();
-        return pathList.get(rand.nextInt(pathList.size()));
-    }
-
     private static class MazeFrame extends JFrame implements KeyListener {
-        
         public MazeFrame(String theTitle) {
             super(theTitle);
         }
@@ -359,22 +335,22 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
                 if ((keyCode == 38) && (validDirections.contains(Direction.UP))) {
                     myPlayer.setDirection(Direction.UP);
                     Vertex next = findVert(curEdges, Direction.UP);
-                    myPlayer.setPosition(next);
+                    myPlayer.setMove(next);
                     System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
                 } else if ((keyCode == 40) && (validDirections.contains(Direction.DOWN))) {
                     myPlayer.setDirection(Direction.DOWN);
                     Vertex next = findVert(curEdges, Direction.DOWN);
-                    myPlayer.setPosition(next);
+                    myPlayer.setMove(next);
                     System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
                 } else if ((keyCode == 39) && (validDirections.contains(Direction.RIGHT))) {
                     myPlayer.setDirection(Direction.RIGHT);
                     Vertex next = findVert(curEdges, Direction.RIGHT);
                     System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
-                    myPlayer.setPosition(next);
+                    myPlayer.setMove(next);
                 } else if ((keyCode == 37) && (validDirections.contains(Direction.LEFT))) {
                     myPlayer.setDirection(Direction.LEFT);
                     Vertex next = findVert(curEdges, Direction.LEFT);
-                    myPlayer.setPosition(next);
+                    myPlayer.setMove(next);
                     System.out.println("Next Vertex: " + next.getRow() + "," + next.getCol());
                 }
             }

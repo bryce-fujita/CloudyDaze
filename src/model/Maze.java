@@ -1,23 +1,41 @@
 package model;
 
 import static logic.PropertyChangeEnabledPlayer.PROPERTY_POSITION;
+import static logic.PropertyChangeEnabledPlayer.PROPERTY_SCORE;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
 
+import logic.Coin;
 import logic.Direction;
+import logic.Enemy;
+import logic.Item;
 import logic.Player;
 
+import org.sqlite.SQLiteDataSource;
+
 public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
+    
+    /** The percentage used to determine the number of coins. **/
+    private static int coinPerc = 10; // EX 10 = 10%
     
     /** The number of rows in the maze. */
     private int numRows;
     
     /** The number of columns in the maze. */
     private int numCols;
+    
+    /** The number of points the player has. */
+    private int myScore;
     
     /** A 2D array to store all of the vertices. */
     private Vertex [][] myMatrix;
@@ -30,6 +48,7 @@ public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
     
     /** A class used to keep track of the players current status. */
     private Player myPlayer;
+    
 
     /** 
      * Constructor for Maze Model.
@@ -40,14 +59,17 @@ public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
     public Maze(int rows, int cols, boolean debug) {
         numRows = rows;
         numCols = cols;
+        myScore = 0;
         myPcs = new PropertyChangeSupport(this);
         myMatrix = new Vertex[rows][cols];
         constructMatrix();
         findPath();
+        fillItemsMatrix();
         myCharMatrix = makeXMatrix();
         myPlayer = new Player();
         myPlayer.addPropertyChangeListener(this);
-        myPlayer.setPosition(myMatrix[0][0]);
+        myPlayer.setMove(myMatrix[0][0]);
+        
     }
 
     /**
@@ -265,12 +287,86 @@ public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
         System.out.println(sb.toString());
         return xMatrix;
     }
+    
+    public void fillItemsMatrix() {
+        final int numSpots = numRows * numCols;
+        final List<Integer> indexAvailable = new ArrayList<>();
+        final Random rand = new Random();
+        for (int i = 0; i < numSpots; i++) {  //by filtering out available locations, we can guarantee we won't have repeated locations
+            indexAvailable.add(i);
+        }
+        //Needed to remove first and list index since this is the starting and ending location.
+        indexAvailable.remove(indexAvailable.size()-1);// last location.
+        indexAvailable.remove(0);// first location
+        int numCoins = numSpots/coinPerc;
+        for (int i = 0; i < numCoins; i++) {
+            final int randomIndex = rand.nextInt(indexAvailable.size());
+            final int arrayIndex = indexAvailable.get(randomIndex);
+            indexAvailable.remove(randomIndex);
+            final double rowLoc;
+            if (arrayIndex % numRows == 0) {
+                rowLoc = arrayIndex / numCols;
+            } else {
+                rowLoc = Math.ceil(arrayIndex / numCols);
+            }
+            final double colLoc = arrayIndex % numCols;
+            Vertex location = myMatrix[(int) rowLoc][(int) colLoc];
+            location.setItem(new Coin(location));
+        }
+        //FILLING ENEMIES USING SQLITE
+        
+        SQLiteDataSource ds = null;
+        
+        try {
+            ds = new SQLiteDataSource();
+            ds.setUrl("jdbc:sqlite:trivia.db");
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(0);
+        }
+        
+        System.out.println("Opened database successfully!");
+        String query = "SELECT * FROM trivia";
+        
+        try ( Connection conn = ds.getConnection();
+                Statement stmt = conn.createStatement(); ) {
+              
+              ResultSet rs = stmt.executeQuery(query);
+              
+              //walk through each 'row' of results, grab data by column/field name
+              // and print it
+              while ( rs.next() && !indexAvailable.isEmpty()) {
+                  String value = rs.getString( "VALUE" );
+                  String img = rs.getString("ICON");
+                  String question = rs.getString( "QUESTION" );
+                  String answer = rs.getString( "ANSWER" );
+                  String w1 = rs.getString("WRONG1");
+                  String w2 = rs.getString("WRONG2");
+                  String w3 = rs.getString("WRONG3");
+                  final int randomIndex = rand.nextInt(indexAvailable.size());
+                  final int arrayIndex = indexAvailable.get(randomIndex);
+                  indexAvailable.remove(randomIndex);
+                  final double rowLoc;
+                  if (arrayIndex % numRows == 0) {
+                      rowLoc = arrayIndex / numCols;
+                  } else {
+                      rowLoc = Math.ceil(arrayIndex / numCols);
+                  }
+                  final double colLoc = arrayIndex % numCols;
+                  Vertex location = myMatrix[(int) rowLoc][(int) colLoc];
+                  location.setItem(new Enemy(location,Integer.parseInt(value), img, question, answer, w1, w2, w3));
+              }
+          } catch ( SQLException e ) {
+              e.printStackTrace();
+              System.exit( 0 );
+          }
+    }
 
     /**
      * Allows access to the character array.
      * @return Returns character array
      */
-    public char[][] getMatrix() {
+    public char[][] getCharMatrix() {
         return myCharMatrix;
     }
     
@@ -296,6 +392,19 @@ public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
      */
     public Player getPlayer() {
         return myPlayer;
+    }
+    
+    public List<Vertex> getItemLocations() {
+        List<Vertex> returnMe = new ArrayList<>();
+        for (int i = 0; i < numRows; i++) {
+            for (int j = 0; j < numCols; j++) {
+                Vertex location = myMatrix[i][j];
+                if (location.getItem() != null) {
+                    returnMe.add(location);
+                }
+            }
+        }
+        return returnMe;
     }
     
     @Override
@@ -326,6 +435,9 @@ public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
     public void propertyChange(PropertyChangeEvent evt) {
         if (PROPERTY_POSITION.equals(evt.getPropertyName())) {
             myPcs.firePropertyChange(PROPERTY_PLAYER, null, null);
+        } else if(PROPERTY_SCORE.equals(evt.getPropertyName())) {
+            myScore += (Integer) evt.getNewValue();
+            myPcs.firePropertyChange(PROPERTY_SCORED, null, myScore);
         }
     }
 }

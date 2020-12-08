@@ -8,7 +8,6 @@ import javax.swing.JButton;
 import javax.swing.JOptionPane;
 
 import model.Vertex;
-import view.Question;
 
 public class Enemy extends Item {
     

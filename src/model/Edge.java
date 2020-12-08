@@ -1,14 +1,20 @@
 package model;
 
+import java.io.Serializable;
 import java.util.Random;
 
 import logic.Direction;
 
-public class Edge {
+public class Edge implements Serializable {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 6305063974782922428L;
     Vertex start;
     public Vertex end;
     int weight;
     public Direction myDir;
+    
     /**Normal constructor. */
     public Edge(Vertex theStart, Vertex theEnd, Direction theDir){
         start = theStart;

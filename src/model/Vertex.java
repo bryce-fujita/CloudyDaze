@@ -1,10 +1,15 @@
 package model;
 
+import java.io.Serializable;
 import java.util.HashSet;
 
 import logic.Item;
 
-public class Vertex {
+public class Vertex implements Serializable{
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 6729501356165865980L;
     private HashSet<Edge> edges;
     private int row;
     private int col;

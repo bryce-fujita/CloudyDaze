@@ -4,6 +4,7 @@ import static model.PropertyChangeEnabledMaze.PROPERTY_SCORED;
 import static model.PropertyChangeEnabledMaze.PROPERTY_PLAYER;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -13,7 +14,11 @@ import java.awt.event.KeyListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -56,28 +61,30 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
      * 
      */
     private static final long serialVersionUID = -9220529195101333347L;
-    private static List<JLabel> myPath;
-    private static List<JLabel> myItems;
+    private List<JLabel> myPath;
+    private List<JLabel> myItems;
+    private List<JLabel> myClouds;
     private static JLabel playerSprite;
     private static JLabel scoreLabel;
-    private static List<JLabel> myClouds;
-    private static Maze myMaze;
+    private Maze myMaze;
     private int move;
     private Timer myTimer;
     private int myTime;
+    private static Player myPlayer;
 
     public MazeController(Maze theMaze, JFrame theFrame) {
         myMaze = theMaze;
-        myClouds = new ArrayList<>();
-        myItems = new ArrayList<>();
-        myPath = new ArrayList<>();
         playerSprite = new JLabel(new ImageIcon("icons//Player_Standing_1.png"));
         scoreLabel = new JLabel();
         myTimer = new Timer(TIMER_DELAY, this);
         myTimer.start();
         myTime = 0;
         move = 0;
-        drawItems(this);
+        myPlayer = theMaze.getPlayer();
+        myClouds = new ArrayList<>();
+        myItems = new ArrayList<>();
+        myPath = new ArrayList <>();
+        drawItems();
         loadMaze(myMaze, this, theFrame);
     }
     
@@ -136,16 +143,28 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         final JMenu fileMenu = new JMenu("File");
 
         final JMenuItem newG = new JMenuItem("New Game");
+        final JMenuItem saveG = new JMenuItem("Save Game");
+        final JMenuItem loadG = new JMenuItem("Load Game");
        
         fileMenu.add(newG);
+        fileMenu.add(saveG);
+        fileMenu.add(loadG);
         fileMenu.addSeparator();
 
         final JMenuItem exitItem = new JMenuItem("Exit");
         
         exitItem.addActionListener(ae -> System.exit(0));
         newG.addActionListener(ae -> {
+            myMaze.removePropertyChangeListener(this);
             myMaze = new Maze(NUM_ROWS, NUM_COLS, true);
             loadMaze(myMaze,this, frame);
+        });
+        saveG.addActionListener(ae -> {
+            saveGame();
+        });
+        loadG.addActionListener(ae -> {
+            myMaze.removePropertyChangeListener(this);
+            loadGame(frame);
         });
         
         fileMenu.add(exitItem);
@@ -175,21 +194,20 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         return helpMenu;
     }
     
-    private static void reset(JPanel pane) {
-        for (JLabel jl  : myClouds) {
+    private void reset(JPanel pane) {
+        for (JLabel jl : myItems) {
             pane.remove(jl);
         }
-        for (JLabel jl  : myItems) {
+        for (JLabel jl : myPath) {
             pane.remove(jl);
         }
-        for (JLabel jl  : myPath) {
-            pane.remove(jl);
-        }
-        scoreLabel.setText("Score : 0");
     }
     
-    private static void loadMaze(Maze theMaze, MazeController pane, JFrame frame) {
+    private void loadMaze(Maze theMaze, MazeController pane, JFrame frame) {
         reset(pane);
+        myPlayer = theMaze.getPlayer();
+        myItems = new ArrayList<>();
+        myPath = new ArrayList<>();
         char[][] cMatrix = theMaze.getCharMatrix();
         
         //Draws out path
@@ -210,18 +228,19 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         
         pane.add(playerSprite, 0);
         pane.add(scoreLabel, 0);   
-        drawItems(pane);
+        drawItems();
         theMaze.addPropertyChangeListener(pane);
         frame.setContentPane(pane);
         scoreLabel.setSize(TILE_SIZE*6,TILE_SIZE);
-        scoreLabel.setLocation(pane.getWidth()-(TILE_SIZE*5), 0);
+        scoreLabel.setLocation((int) (TILE_SIZE*NUM_COLS*1.5), 0); 
         scoreLabel.setFont(scoreLabel.getFont().deriveFont(TILE_SIZE - 5.0f));
         scoreLabel.setText("Score: 0");
+        myMaze = theMaze;
     }
     
-    private static void drawItems(JPanel pane) {
+    private void drawItems() {
         //Draws items onto path (Coins or Enemies)
-        removeItems(pane);
+        removeItems();
         myItems.clear();
         List<Vertex> items = myMaze.getItemLocations();
         for (int i = 0; i < items.size(); i++) {
@@ -232,13 +251,13 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
             itemlb.setSize(TILE_SIZE,TILE_SIZE);
             itemlb.setLocation(TILE_SIZE*2*(col+1)-TILE_SIZE,TILE_SIZE*2*(row+1)-TILE_SIZE);
             myItems.add(itemlb);
-            pane.add(itemlb, 0);
+            this.add(itemlb, 0);
         }
     }
     
-    private static void removeItems(JPanel pane) {
+    private void removeItems() {
         for (JLabel it : myItems) {
-            pane.remove(it);
+            this.remove(it);
         }
     }
     
@@ -315,6 +334,65 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         }
     }
     
+    public void saveGame() {
+        try {
+            JFileChooser fc = new JFileChooser();
+            fc.setCurrentDirectory(null);  //Opens directory to the system's default
+            fc.setDialogTitle("Save Game");
+            fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {  //If selected path is chosen and accepted.
+                String fileloc = (""+fc.getCurrentDirectory()); //cheat to turn file location into a string.
+                System.out.println("File Location: " + fileloc);
+                File directory = fc.getSelectedFile();
+                String filePath = directory.getAbsolutePath();
+                String fileName = JOptionPane.showInputDialog("Please enter a name for your file:") + ".bin";  //sets name for file.
+                String newFilePath = filePath + "//" + fileName;  //saves into the location.
+                System.out.println(newFilePath);
+                FileOutputStream newF = new FileOutputStream(new File(newFilePath));
+                ObjectOutputStream out = new ObjectOutputStream(newF);
+                out.writeObject(myMaze);
+                out.close();
+                newF.close();
+                System.out.println("Object has been serialized.");
+            } else { //No acceptable locations chosen
+                System.out.println("No Selection ");
+            }
+        } catch (Exception e) {
+            String s = "Something went wrong.";
+            s += "\nIf I knew more about Java, maybe I would have done something";
+            s += "\nBut for now, nothing.";
+            JOptionPane.showMessageDialog(null,s);
+
+        }
+    }
+    
+    
+    public void loadGame(JFrame frame) {
+        try {
+            JFileChooser fc = new JFileChooser();
+            fc.setCurrentDirectory(null);  //Opens directory to the system's default
+            fc.setDialogTitle("Load Game");
+            if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {  //If selected path is chosen and accepted.
+                File game = fc.getSelectedFile();
+                FileInputStream oldF = new FileInputStream(game);
+                ObjectInputStream in = new ObjectInputStream(oldF);
+                myMaze = (Maze) in.readObject();
+                oldF.close();
+                in.close();
+                System.out.println("Object has been serialized.");
+                loadMaze(myMaze, this, frame);
+                System.out.println("Maze Loaded");
+            } else { //No acceptable locations chosen
+                System.out.println("No Selection ");
+            }
+        } catch (Exception e) {
+            String s = "Something went wrong.";
+            s += "\nIf I knew more about Java, maybe I would have done something";
+            s += "\nBut for now, nothing.";
+            JOptionPane.showMessageDialog(null,s);
+
+        }
+    }
     private void movePlayer() {
         Player player = myMaze.getPlayer();
         if (player.getDirection().equals(Direction.UP)) {
@@ -336,10 +414,9 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
     @Override
     public void propertyChange(PropertyChangeEvent theEvent) {
         if(PROPERTY_PLAYER.equals(theEvent.getPropertyName())) {
-            Player player = myMaze.getPlayer();
-            player.setMoving(true);
+            myPlayer.setMoving(true);
         } else if(PROPERTY_SCORED.equals(theEvent.getPropertyName())) {
-            drawItems(this);
+            drawItems();
             scoreLabel.setText("Score: " + (Integer) theEvent.getNewValue());
         }
     }
@@ -379,7 +456,6 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
 
         @Override
         public void keyPressed(KeyEvent e) {
-            Player myPlayer = myMaze.getPlayer();
             if(!myPlayer.isMoving()) {
                 Vertex curLocation = myPlayer.getVertex();
                 HashSet<Edge> curEdges = curLocation.getEdges();

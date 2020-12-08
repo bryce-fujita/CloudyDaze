@@ -1,8 +1,15 @@
 package logic;
 
+import java.io.Serializable;
+
 import model.Vertex;
 
-public abstract class Item {
+public abstract class Item implements Serializable{
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -335541443809781570L;
+
     protected int scoreValue;
     
     private String type;

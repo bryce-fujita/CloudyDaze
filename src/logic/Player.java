@@ -3,11 +3,16 @@ package logic;
 import java.awt.Point;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.Serializable;
 
 import model.Vertex;
 
-public class Player implements PropertyChangeEnabledPlayer {
+public class Player implements PropertyChangeEnabledPlayer, Serializable {
     
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 2299037678363512327L;
     private int score;
     private Direction myDir;
     private boolean moving;

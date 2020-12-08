@@ -10,9 +10,9 @@ public class Main {
     public static void main(String[] args) {
 
         try {
-            //UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             //UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
-            UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
+            //UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
         } catch (final UnsupportedLookAndFeelException ex) {
             ex.printStackTrace();
         } catch (final IllegalAccessException ex) {
@@ -23,7 +23,7 @@ public class Main {
             ex.printStackTrace();
         }
         /* Turn off metal's use of bold fonts */
-        UIManager.put("swing.boldMetal", Boolean.FALSE);
+        //UIManager.put("swing.boldMetal", Boolean.FALSE);
         
         //Schedule a job for the event dispatch thread:
         //creating and showing this application's GUI.

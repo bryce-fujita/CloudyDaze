@@ -6,6 +6,7 @@ import static logic.PropertyChangeEnabledPlayer.PROPERTY_SCORE;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -23,8 +24,13 @@ import logic.Player;
 
 import org.sqlite.SQLiteDataSource;
 
-public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener {
+public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener, Serializable {
     
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -3799202001320223164L;
+
     /** The percentage used to determine the number of coins. **/
     private static int coinPerc = 10; // EX 10 = 10%
     

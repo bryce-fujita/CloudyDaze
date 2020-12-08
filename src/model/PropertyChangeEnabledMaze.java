@@ -35,6 +35,8 @@ public interface PropertyChangeEnabledMaze {
      */
     String PROPERTY_PLAYER = "the Player one";
     
+    String PROPERTY_WON = "the Player won";
+    
     /**
      * Add a PropertyChangeListener to the listener list. The listener is registered for 
      * all properties. The same listener object may be added more than once, and will be 

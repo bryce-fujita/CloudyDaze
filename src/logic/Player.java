@@ -55,6 +55,9 @@ public class Player implements PropertyChangeEnabledPlayer, Serializable {
                 myVertex = theVertex;
             }
         }
+        if (theVertex.isEnd()) {
+            myPcs.firePropertyChange(PROPERTY_WIN, null, null);
+        }
     }
     
     public Vertex getVertex() {

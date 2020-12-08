@@ -15,12 +15,21 @@ public class Vertex implements Serializable{
     private int col;
     private Item myItem;
     boolean path = false;
+    private boolean end = false;
     
     public Vertex(int theRow, int theCol) {
         row = theRow;
         col = theCol;
         edges = new HashSet<Edge>();
         myItem = null;
+    }
+    
+    public Vertex(int theRow, int theCol, boolean theEnd) {
+        row = theRow;
+        col = theCol;
+        edges = new HashSet<Edge>();
+        myItem = null;
+        end = theEnd;
     }
     
     public HashSet<Edge> getEdges() {
@@ -41,5 +50,9 @@ public class Vertex implements Serializable{
 
     public int getRow() {
         return row;
+    }
+    
+    public boolean isEnd() {
+        return end;
     }
 }

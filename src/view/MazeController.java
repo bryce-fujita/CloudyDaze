@@ -2,6 +2,7 @@ package view;
 
 import static model.PropertyChangeEnabledMaze.PROPERTY_SCORED;
 import static model.PropertyChangeEnabledMaze.PROPERTY_PLAYER;
+import static model.PropertyChangeEnabledMaze.PROPERTY_WON;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -79,6 +80,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
     private int move;
     private Timer myTimer;
     private int myTime;
+    private JFrame myFrame;
     private static Player myPlayer;
 
     public MazeController(JFrame theFrame) {
@@ -93,6 +95,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         myItems = new ArrayList<>();
         myPath = new ArrayList<>();
         myTitle = new ArrayList<>();
+        myFrame = theFrame;
         theFrame.setContentPane(this);
         populateClouds();
         buildTitle(theFrame);
@@ -492,7 +495,19 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
             myPlayer.setMoving(true);
         } else if(PROPERTY_SCORED.equals(theEvent.getPropertyName())) {
             drawItems();
-            scoreLabel.setText("Score: " + (Integer) theEvent.getNewValue());
+            int score = (Integer) theEvent.getNewValue();
+            scoreLabel.setText("Score: " + score);
+            if (score < 0) {
+                JOptionPane.showMessageDialog(null, "GAME OVER!!! \n Score: " + (Integer) theEvent.getNewValue());
+                myMaze.removePropertyChangeListener(this);
+                myMaze = new Maze(NUM_ROWS, NUM_COLS, true);
+                loadMaze(myMaze, this, myFrame);
+            }
+        } else if(PROPERTY_WON.equals(theEvent.getPropertyName())) {
+            JOptionPane.showMessageDialog(null, "CONGRATS YOU WIN!!! \n Score: " + (Integer) theEvent.getNewValue());
+            myMaze.removePropertyChangeListener(this);
+            myMaze = new Maze(NUM_ROWS, NUM_COLS, true);
+            loadMaze(myMaze, this, myFrame);
         }
     }
     

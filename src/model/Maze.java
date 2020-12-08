@@ -2,6 +2,7 @@ package model;
 
 import static logic.PropertyChangeEnabledPlayer.PROPERTY_POSITION;
 import static logic.PropertyChangeEnabledPlayer.PROPERTY_SCORE;
+import static logic.PropertyChangeEnabledPlayer.PROPERTY_WIN;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -71,11 +72,18 @@ public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener, 
         constructMatrix();
         findPath();
         fillItemsMatrix();
+        constructEnd();
         myCharMatrix = makeXMatrix();
         myPlayer = new Player();
         myPlayer.addPropertyChangeListener(this);
         myPlayer.setMove(myMatrix[0][0]);
         
+    }
+    
+    private void constructEnd() {
+        Vertex last = myMatrix[numRows-1][numCols-1];
+        Vertex next = new Vertex(numRows, numCols-1, true);
+        last.getEdges().add(new Edge(last, next, Direction.DOWN));
     }
 
     /**
@@ -444,6 +452,8 @@ public class Maze implements PropertyChangeEnabledMaze, PropertyChangeListener, 
         } else if(PROPERTY_SCORE.equals(evt.getPropertyName())) {
             myScore += (Integer) evt.getNewValue();
             myPcs.firePropertyChange(PROPERTY_SCORED, null, myScore);
+        } else if(PROPERTY_WIN.equals(evt.getPropertyName())) {
+            myPcs.firePropertyChange(PROPERTY_WON, null, myScore);
         }
     }
 }

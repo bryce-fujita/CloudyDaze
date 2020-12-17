@@ -55,9 +55,11 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
     
     private static int TILE_SIZE = 30;
     
-    private static int NUM_ROWS = 10;
+    private static int EASY_DIFFICULTY = 5;
     
-    private static int NUM_COLS = 10;
+    private static int NORMAL_DIFFICULTY = 10;
+    
+    private static int HARD_DIFFICULTY = 15;
     
     private static final int TITLE_SIZE = 200;
     
@@ -66,6 +68,10 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
     private static final int TEXT_BOX_HEIGHT = 60;
     
     private static final int BOX_OFFSET = 10;
+    
+    private static final int WINDOW_HEIGHT_OFFSET = 60;
+    
+    private static final int WINDOW_WIDTH_OFFSET = 16;
     /**
      * 
      */
@@ -82,6 +88,9 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
     private int myTime;
     private JFrame myFrame;
     private static Player myPlayer;
+    private int numRows;
+    private int numCols;
+    private int difficulty;
 
     public MazeController(JFrame theFrame) {
         playerSprite = new JLabel(new ImageIcon("icons//Player_Standing_1.png"));
@@ -90,7 +99,10 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         myTimer.start();
         myTime = 0;
         move = 0;
-        myMaze = new Maze(NUM_ROWS, NUM_COLS, true);
+        difficulty = NORMAL_DIFFICULTY;
+        numRows = NORMAL_DIFFICULTY;
+        numCols = NORMAL_DIFFICULTY;
+        myMaze = new Maze(numRows, numCols, true);
         myClouds = new ArrayList<>();
         myItems = new ArrayList<>();
         myPath = new ArrayList<>();
@@ -107,14 +119,13 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         MazeFrame frame = new MazeFrame("Cloudy Days");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
-        frame.pack();
         frame.setIconImage(new ImageIcon("icons//CloudTile.png").getImage());
+        frame.setResizable(false);
         frame.setVisible(true);
         frame.addKeyListener(frame);
         
-        int x = ((NUM_ROWS*2) + 1) * TILE_SIZE;
-        int y = ((NUM_COLS*2) + 1) * TILE_SIZE;
-        frame.setSize(y + 15, x + 60);
+        int size = ((NORMAL_DIFFICULTY*2) + 1) * TILE_SIZE;
+        frame.setSize(size + WINDOW_WIDTH_OFFSET, size + WINDOW_HEIGHT_OFFSET);
         
         //Create and set up the content pane.
         final MazeController pane = new MazeController(frame);
@@ -137,12 +148,14 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
     
     private void buildTitle(JFrame frame) {
         reset(this);
+        int size = ((NORMAL_DIFFICULTY*2) + 1) * TILE_SIZE;
+        frame.setSize(size + WINDOW_WIDTH_OFFSET, size + WINDOW_HEIGHT_OFFSET);
         myTitle.clear();
         JLabel title = new JLabel(new ImageIcon("icons//Title.png"));
         title.setSize(TITLE_SIZE*2, TITLE_SIZE);
-        title.setLocation((((NUM_ROWS*2) + 1) * TILE_SIZE)/2 - TITLE_SIZE, TITLE_SIZE/2);
+        title.setLocation((((numCols*2) + 1) * TILE_SIZE)/2 - TITLE_SIZE, TITLE_SIZE/2);
         
-        int buttonX = ((((NUM_ROWS*2) + 1) * TILE_SIZE)/2) - (TEXT_BOX_WIDTH/2);
+        int buttonX = ((((numCols*2) + 1) * TILE_SIZE)/2) - (TEXT_BOX_WIDTH/2);
         
         JButton newGame = new JButton(new ImageIcon("icons//New_Game.png"));
         newGame.setSize(TEXT_BOX_WIDTH, TEXT_BOX_HEIGHT);
@@ -151,7 +164,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         newGame.setBorder(null);
         newGame.addActionListener(ae -> {
             myMaze.removePropertyChangeListener(this);
-            myMaze = new Maze(NUM_ROWS, NUM_COLS, true);
+            myMaze = new Maze(difficulty, difficulty, true);
             loadMaze(myMaze, this, frame);
         });
         
@@ -165,6 +178,23 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
             loadGame(frame);
         });
         
+        /*JButton diff = new JButton(new ImageIcon("icons//Difficulty.png"));
+        diff.setSize(TEXT_BOX_WIDTH, TEXT_BOX_HEIGHT);
+        diff.setLocation(buttonX, loadGame.getLocation().y + TEXT_BOX_HEIGHT + BOX_OFFSET);
+        diff.setOpaque(false);
+        diff.setBorder(null);
+        String [] options = {"Easy", "Normal", "Hard"};
+        diff.addActionListener(ae -> {
+            String s = (String) JOptionPane.showInputDialog(null, "Choose a difficulty:", "Difficulty", JOptionPane.PLAIN_MESSAGE, null, options,options[1]);
+            if (s.equals(options[0])) {
+                difficulty = EASY_DIFFICULTY;
+            } else if (s.equals(options[2])) {
+                difficulty = HARD_DIFFICULTY;
+            } else {
+                difficulty = NORMAL_DIFFICULTY;
+            }
+        });*/
+        
         JButton help = new JButton(new ImageIcon("icons//Help.png"));
         help.setSize(TEXT_BOX_WIDTH, TEXT_BOX_HEIGHT);
         help.setLocation(buttonX, loadGame.getLocation().y + TEXT_BOX_HEIGHT + BOX_OFFSET);
@@ -175,11 +205,13 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         myTitle.add(title);
         myTitle.add(newGame);
         myTitle.add(loadGame);
+        //myTitle.add(diff);
         myTitle.add(help);
         
         this.add(title,1);
         this.add(newGame,1);
         this.add(loadGame,1);
+        //this.add(diff);
         this.add(help,1);
     }
     
@@ -213,10 +245,10 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
 
         final JMenuItem exitItem = new JMenuItem("Exit");
         
-        exitItem.addActionListener(ae -> System.exit(0));
+        exitItem.addActionListener(ae -> buildTitle(frame));
         newG.addActionListener(ae -> {
             myMaze.removePropertyChangeListener(this);
-            myMaze = new Maze(NUM_ROWS, NUM_COLS, true);
+            myMaze = new Maze(difficulty, difficulty, true);
             loadMaze(myMaze, this, frame);
         });
         saveG.addActionListener(ae -> {
@@ -249,7 +281,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         aboutItem.addActionListener(ae ->
                         JOptionPane.showMessageDialog(new JFrame(), "Bryce Fujita and Ruvim Radchishin\n"
                                       + "Autumn 2020\n"
-                        + "TCSS 360", "About CloudyDaze", JOptionPane.INFORMATION_MESSAGE,
+                        + "TCSS 360", "About Cloudy Days", JOptionPane.INFORMATION_MESSAGE,
                         null));
         return helpMenu;
     }
@@ -264,18 +296,23 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         for (JLabel jl : myPath) {
             pane.remove(jl);
         }
+        pane.remove(playerSprite);
+        pane.remove(scoreLabel);
     }
     
     private void loadMaze(Maze theMaze, MazeController pane, JFrame frame) {
         reset(pane);
+        int size = ((NORMAL_DIFFICULTY*2) + 1) * TILE_SIZE;
+        frame.setSize(size + WINDOW_WIDTH_OFFSET, size + WINDOW_HEIGHT_OFFSET);
+        frame.repaint();
         myPlayer = theMaze.getPlayer();
         myItems.clear();
         myPath.clear();
         char[][] cMatrix = theMaze.getCharMatrix();
         
         //Draws out path
-        for(int i = 0; i < (NUM_ROWS*2) + 1; i++) {
-            for(int j = 0; j < (NUM_COLS*2) + 1; j++) { 
+        for(int i = 0; i < (numCols*2) + 1; i++) {
+            for(int j = 0; j < (numRows*2) + 1; j++) { 
                 if (cMatrix[i][j] == ' ' || cMatrix[i][j] == '+') {
                     JLabel clpath = new JLabel(new ImageIcon("icons//CloudTile.png"));
                     clpath.setSize(TILE_SIZE,TILE_SIZE);
@@ -294,7 +331,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         drawItems();
         theMaze.addPropertyChangeListener(pane);
         scoreLabel.setSize(TILE_SIZE*6,TILE_SIZE);
-        scoreLabel.setLocation((int) (TILE_SIZE*NUM_COLS*1.5), 0); 
+        scoreLabel.setLocation((int) (TILE_SIZE*numCols*1.5), 0); 
         scoreLabel.setFont(scoreLabel.getFont().deriveFont(TILE_SIZE - 5.0f));
         scoreLabel.setText("Score: 0");
         myMaze = theMaze;
@@ -325,8 +362,8 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         for (int i = 0; i < randI; i++) {
             JLabel cloud = new JLabel(new ImageIcon("icons//BackgroundCloud.png"));
             cloud.setSize(100,50);
-            int height = rand.nextInt((NUM_COLS*2) * TILE_SIZE);
-            int distance = rand.nextInt(((NUM_ROWS*2) + 1) * TILE_SIZE);
+            int height = rand.nextInt((numCols*2) * TILE_SIZE);
+            int distance = rand.nextInt(((numRows*2) + 1) * TILE_SIZE);
             cloud.setLocation(distance, height);
             myClouds.add(cloud);
             this.add(cloud, 0);
@@ -424,7 +461,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
                 File directory = fc.getSelectedFile();
                 String filePath = directory.getAbsolutePath();
                 String fileName = JOptionPane.showInputDialog("Please enter a name for your file:") + ".bin";  //sets name for file.
-                String newFilePath = filePath + "//" + fileName;  //saves into the location.
+                String newFilePath = filePath + "\\" + fileName;  //saves into the location.
                 System.out.println(newFilePath);
                 FileOutputStream newF = new FileOutputStream(new File(newFilePath));
                 ObjectOutputStream out = new ObjectOutputStream(newF);
@@ -500,13 +537,13 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
             if (score < 0) {
                 JOptionPane.showMessageDialog(null, "GAME OVER!!! \n Score: " + (Integer) theEvent.getNewValue());
                 myMaze.removePropertyChangeListener(this);
-                myMaze = new Maze(NUM_ROWS, NUM_COLS, true);
+                myMaze = new Maze(numRows, numCols, true);
                 loadMaze(myMaze, this, myFrame);
             }
         } else if(PROPERTY_WON.equals(theEvent.getPropertyName())) {
             JOptionPane.showMessageDialog(null, "CONGRATS YOU WIN!!! \n Score: " + (Integer) theEvent.getNewValue());
             myMaze.removePropertyChangeListener(this);
-            myMaze = new Maze(NUM_ROWS, NUM_COLS, true);
+            myMaze = new Maze(numRows, numCols, true);
             loadMaze(myMaze, this, myFrame);
         }
     }
@@ -519,8 +556,8 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         if (randI <= 10) {
             JLabel cloud = new JLabel(new ImageIcon("icons//BackgroundCloud.png"));
             cloud.setSize(100,50);
-            int height = rand.nextInt((NUM_COLS*2) * TILE_SIZE);
-            int distance = (((NUM_ROWS*2) + 1) * TILE_SIZE);
+            int height = rand.nextInt((numRows*2) * TILE_SIZE);
+            int distance = (((numCols*2) + 1) * TILE_SIZE);
             cloud.setLocation(distance, height);
             myClouds.add(cloud);
             this.add(cloud);

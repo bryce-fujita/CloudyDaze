@@ -41,6 +41,7 @@ public class Instructions extends JPanel {
         
         pane.setOpaque(true); //content panes must be opaque
         frame.setContentPane(pane);
+        frame.setResizable(false);
         frame.setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
         frame.setIconImage(new ImageIcon("icons//CloudTile.png").getImage());
         frame.setBackground(new Color(89, 205, 238));

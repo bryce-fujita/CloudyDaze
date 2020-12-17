@@ -3,11 +3,16 @@ package logic;
 import java.awt.Point;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.Serializable;
 
 import model.Vertex;
 
-public class Player implements PropertyChangeEnabledPlayer {
+public class Player implements PropertyChangeEnabledPlayer, Serializable {
     
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 2299037678363512327L;
     private int score;
     private Direction myDir;
     private boolean moving;
@@ -38,9 +43,21 @@ public class Player implements PropertyChangeEnabledPlayer {
         return myDir;
     }
     
-    public void setPosition(Vertex theVertex) {
-        myPcs.firePropertyChange(PROPERTY_POSITION, null, null);
-        myVertex = theVertex;
+    public void setMove(Vertex theVertex) {
+        if (theVertex.getItem() == null) {
+            myPcs.firePropertyChange(PROPERTY_POSITION, null, null);
+            myVertex = theVertex;
+        } else {
+            int value = theVertex.getItem().itemAction();
+            myPcs.firePropertyChange(PROPERTY_SCORE, null, value);
+            if (value > 0) {
+                myPcs.firePropertyChange(PROPERTY_POSITION, null, null);
+                myVertex = theVertex;
+            }
+        }
+        if (theVertex.isEnd()) {
+            myPcs.firePropertyChange(PROPERTY_WIN, null, null);
+        }
     }
     
     public Vertex getVertex() {

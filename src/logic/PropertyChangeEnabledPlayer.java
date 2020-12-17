@@ -8,7 +8,16 @@ public interface PropertyChangeEnabledPlayer {
      * A property name for the current Light in the simulation.
      */
     String PROPERTY_POSITION = "red doesnt have to be red";
+    
+    /**
+     * A property name for the current Light in the simulation.
+     */
+    String PROPERTY_SCORE = "The Player Score Value";
 
+    /**
+     * A property name for the current Light in the simulation.
+     */
+    String PROPERTY_WIN = "WOW WE WON";
     /**
      * Add a PropertyChangeListener to the listener list. The listener is registered for 
      * all properties. The same listener object may be added more than once, and will be 

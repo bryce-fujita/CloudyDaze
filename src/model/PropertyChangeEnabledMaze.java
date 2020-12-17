@@ -28,12 +28,14 @@ public interface PropertyChangeEnabledMaze {
     /**
      * A property name for the current time being changed;
      */
-    String PROPERTY_TIME = "it could be nonsensecele";
+    String PROPERTY_SCORED = "it could be nonsensecele";
     
     /**
      * A property name for the current time being changed;
      */
     String PROPERTY_PLAYER = "the Player one";
+    
+    String PROPERTY_WON = "the Player won";
     
     /**
      * Add a PropertyChangeListener to the listener list. The listener is registered for 

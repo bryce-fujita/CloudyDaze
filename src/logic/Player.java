@@ -1,5 +1,6 @@
 package logic;
 
+
 import java.awt.Point;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -45,14 +46,14 @@ public class Player implements PropertyChangeEnabledPlayer, Serializable {
     
     public void setMove(Vertex theVertex) {
         if (theVertex.getItem() == null) {
-            myPcs.firePropertyChange(PROPERTY_POSITION, null, null);
             myVertex = theVertex;
+            myPcs.firePropertyChange(PROPERTY_POSITION, null, null);
         } else {
             int value = theVertex.getItem().itemAction();
             myPcs.firePropertyChange(PROPERTY_SCORE, null, value);
             if (value > 0) {
-                myPcs.firePropertyChange(PROPERTY_POSITION, null, null);
                 myVertex = theVertex;
+                myPcs.firePropertyChange(PROPERTY_POSITION, null, null);
             }
         }
         if (theVertex.isEnd()) {

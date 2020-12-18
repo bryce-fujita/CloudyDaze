@@ -53,45 +53,92 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
     /** Set the delay for the timer. */
     private static int TIMER_DELAY = 80;
     
+    /** Tells the program how big to make each unit of the screen. */
     private static int TILE_SIZE = 30;
     
+    /** The number of tiles to use for the easy difficulty. NOT FULLY FUNCTIONAL*/
     private static int EASY_DIFFICULTY = 5;
     
+    /** The number of tiles to use for the normal difficulty. NOT FULLY FUNCTIONAL*/
     private static int NORMAL_DIFFICULTY = 10;
     
+    /** The number of tiles to use for the hard difficulty. NOT FULLY FUNCTIONAL*/
     private static int HARD_DIFFICULTY = 15;
     
+    /** For the opening title, this is the sized used. */
     private static final int TITLE_SIZE = 200;
     
+    /** The width used for the opening title text boxes. */
     private static final int TEXT_BOX_WIDTH = 200;
     
+    /** The height used for the opening title text boxes. */
     private static final int TEXT_BOX_HEIGHT = 60;
     
+    /** The space between opening title text boxes. */
     private static final int BOX_OFFSET = 10;
     
+    /** The offset for the frame to fit all components cleanly. */
     private static final int WINDOW_HEIGHT_OFFSET = 60;
     
+    /** The offset for the width to fit all the components cleanly. */
     private static final int WINDOW_WIDTH_OFFSET = 16;
-    /**
-     * 
-     */
+    
+    
+    /** Used for the serialization of JFrame compononents. */    
     private static final long serialVersionUID = -9220529195101333347L;
+    
+    /** The path of clouds drawn on screen. */
     private List<JLabel> myPath;
+    
+    /** The items that are displayed over the path. */
     private List<JLabel> myItems;
+    
+    /** Randomly generated clouds that move in the background. */
     private List<JLabel> myClouds;
+    
+    /** Components used for opening title. */
     private List<Component> myTitle;
+    
+    /** The sprite used to show the player. */
     private static JLabel playerSprite;
+    
+    /** The box used to display the score. */
     private static JLabel scoreLabel;
+    
+    /** The model that the view looks at. */
     private Maze myMaze;
+    
+    /** Integer value to see how far a player has moved per time. */
     private int move;
+    
+    /** The timer class used for all animations. */
     private Timer myTimer;
+    
+    /** The time that is kept from the timer. */
     private int myTime;
+    
+    /** The frame for the window. */
     private JFrame myFrame;
+    
+    /** The player model that is used for gameplay. */
     private static Player myPlayer;
+    
+    /** The number of rows the maze has. */
     private int numRows;
+    
+    /** The number of columns the maze has. */
     private int numCols;
+    
+    /** The difficulty set by the player. NOT FUNCTIONAL */
     private int difficulty;
+    
+    /** Used for stop/starting music. */
+    private static Clip clip;
 
+    /**
+     * Constructor for the view panel.
+     * @param theFrame The window the panel is in
+     */
     public MazeController(JFrame theFrame) {
         playerSprite = new JLabel(new ImageIcon("icons//Player_Standing_1.png"));
         scoreLabel = new JLabel();
@@ -113,6 +160,9 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         buildTitle(theFrame);
     }
     
+    /**
+     * Builds Window on startup.
+     */
     public static void createAndShowGUI() {
         
         //Create and set up the window.
@@ -132,20 +182,26 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         pane.setOpaque(true); //content panes must be opaque
         pane.setLayout(null);
         frame.setJMenuBar(pane.buildMenuBar(frame));
-//        File soundFile = new File("music//CloudyDaze.wav");
-//        try { AudioInputStream in
-//            = AudioSystem.getAudioInputStream(soundFile); Clip clip =
-//            AudioSystem.getClip(); clip.open(in); clip.start();
-//            clip.loop(Clip.LOOP_CONTINUOUSLY);
-//        } catch (UnsupportedAudioFileException e) {
-//            e.printStackTrace();
-//        } catch (IOException e) { 
-//            e.printStackTrace();
-//        } catch (LineUnavailableException e) {
-//            e.printStackTrace();
-//        }
+        File soundFile = new File("music//CloudyDaze.wav");
+        try { AudioInputStream in
+            = AudioSystem.getAudioInputStream(soundFile);
+            clip = AudioSystem.getClip();
+            clip.open(in);
+            clip.start();
+            clip.loop(Clip.LOOP_CONTINUOUSLY);
+        } catch (UnsupportedAudioFileException e) {
+            e.printStackTrace();
+        } catch (IOException e) { 
+            e.printStackTrace();
+        } catch (LineUnavailableException e) {
+            e.printStackTrace();
+        }
     }
     
+    /**
+     * Builds opening title.
+     * @param frame the window itself
+     */
     private void buildTitle(JFrame frame) {
         reset(this);
         int size = ((NORMAL_DIFFICULTY*2) + 1) * TILE_SIZE;
@@ -177,7 +233,7 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
             myMaze.removePropertyChangeListener(this);
             loadGame(frame);
         });
-        
+        // Removed due to not being capable of resizing the window.
         /*JButton diff = new JButton(new ImageIcon("icons//Difficulty.png"));
         diff.setSize(TEXT_BOX_WIDTH, TEXT_BOX_HEIGHT);
         diff.setLocation(buttonX, loadGame.getLocation().y + TEXT_BOX_HEIGHT + BOX_OFFSET);
@@ -237,10 +293,13 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         final JMenuItem newG = new JMenuItem("New Game");
         final JMenuItem saveG = new JMenuItem("Save Game");
         final JMenuItem loadG = new JMenuItem("Load Game");
+        final JMenuItem music = new JMenuItem("Play/Pause Music");
        
         fileMenu.add(newG);
         fileMenu.add(saveG);
         fileMenu.add(loadG);
+        fileMenu.addSeparator();
+        fileMenu.add(music);
         fileMenu.addSeparator();
 
         final JMenuItem exitItem = new JMenuItem("Exit");
@@ -257,6 +316,14 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         loadG.addActionListener(ae -> {
             myMaze.removePropertyChangeListener(this);
             loadGame(frame);
+        });
+        music.addActionListener(ae -> {
+              if (clip.isRunning()) {
+                  clip.stop();
+              } else {
+                  clip.start();
+                  clip.loop(Clip.LOOP_CONTINUOUSLY);
+              }
         });
         
         fileMenu.add(exitItem);
@@ -300,6 +367,12 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         pane.remove(scoreLabel);
     }
     
+    /**
+     * Loads the maze onto the panel.
+     * @param theMaze The model used
+     * @param pane The pane the model is viewed on
+     * @param frame The frame the pane is in
+     */
     private void loadMaze(Maze theMaze, MazeController pane, JFrame frame) {
         reset(pane);
         int size = ((NORMAL_DIFFICULTY*2) + 1) * TILE_SIZE;
@@ -324,7 +397,8 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         } 
         
         playerSprite.setSize(TILE_SIZE,TILE_SIZE);
-        playerSprite.setLocation(TILE_SIZE, TILE_SIZE - (TILE_SIZE/4));
+        Vertex myTru = myPlayer.getVertex();
+        playerSprite.setLocation((myTru.getCol()+1)*(TILE_SIZE*2) - TILE_SIZE, ((myTru.getRow()+1)*TILE_SIZE*2) - (TILE_SIZE/4)- TILE_SIZE);
         
         pane.add(playerSprite, 0);
         pane.add(scoreLabel, 0);   
@@ -338,6 +412,9 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         frame.requestFocusInWindow();
     }
     
+    /**
+     * Draws items onto pane.
+     */
     private void drawItems() {
         //Draws items onto path (Coins or Enemies)
         removeItems();
@@ -355,6 +432,9 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         }
     }
     
+    /**
+     * Draws random clouds on start up.
+     */
     private void populateClouds() {
         Random rand = new Random();
         int randI = rand.nextInt(10);
@@ -370,24 +450,37 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         }
     }
     
+    /**
+     * Removes items from pane.
+     */
     private void removeItems() {
         for (JLabel it : myItems) {
             this.remove(it);
         }
     }
     
+    /**
+     * Paints components into panel.
+     */
     @Override
     public void paintComponent(final Graphics theGraphics) {
         super.paintComponent(theGraphics);
         this.setBackground(new Color(89, 205, 238));
     }
     
+    /**
+     * Moves background clouds.
+     */
     private void moveBClouds() {
         for(JLabel cloud : myClouds) {
             cloud.setLocation(cloud.getLocation().x-(2), cloud.getLocation().y);
         }
     }
     
+    /**
+     * Animations used for path clouds.
+     * @param theTime used to determine which frame to use
+     */
     private void updatePClouds(int theTime) {
         int mod = (theTime % 10);
         if ((mod < 5) && (mod >= 3)) {
@@ -409,6 +502,10 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         }
     }
     
+    /**
+     * Updates player direction and player animations.
+     * @param theTime
+     */
     private void updatePlayer(int theTime) {
         Player player = myMaze.getPlayer();
         String cdir = "";
@@ -449,6 +546,10 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         }
     }
     
+    
+    /**
+     * Used to serialize the game Model and save it to a file.
+     */
     public void saveGame() {
         try {
             JFileChooser fc = new JFileChooser();
@@ -481,7 +582,10 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         }
     }
     
-    
+    /**
+     * Loads serialized model into game.
+     * @param frame the frame that is used to load the maze
+     */
     public void loadGame(JFrame frame) {
         try {
             JFileChooser fc = new JFileChooser();
@@ -494,13 +598,12 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
                 myMaze = (Maze) in.readObject();
                 oldF.close();
                 in.close();
-                System.out.println("Object has been serialized.");
                 loadMaze(myMaze, this, frame);
                 System.out.println("Maze Loaded");
             } else { //No acceptable locations chosen
                 System.out.println("No Selection ");
             }
-        } catch (Exception e) {
+        } catch (Exception e) { // Old reused code that could be fixed at this point
             String s = "Something went wrong.";
             s += "\nIf I knew more about Java, maybe I would have done something";
             s += "\nBut for now, nothing.";
@@ -508,6 +611,10 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
 
         }
     }
+    
+    /**
+     * Moves the playersprite on screen based on the direction the player is facing.
+     */
     private void movePlayer() {
         Player player = myMaze.getPlayer();
         if (player.getDirection().equals(Direction.UP)) {
@@ -526,6 +633,9 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
     }
 
 
+    /**
+     * Listener for when the model changes.
+     */
     @Override
     public void propertyChange(PropertyChangeEvent theEvent) {
         if(PROPERTY_PLAYER.equals(theEvent.getPropertyName())) {
@@ -548,6 +658,9 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         }
     }
     
+    /**
+     * Listener for everytime the timer changes.
+     */
     @Override
     public void actionPerformed(ActionEvent e) {
         myTime++;
@@ -568,6 +681,11 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
         repaint();
     }
 
+    /**
+     * Used to build a frame for the window that takes user input.
+     * @author Bryce Fujita
+     *
+     */
     private static class MazeFrame extends JFrame implements KeyListener {
         public MazeFrame(String theTitle) {
             super(theTitle);
@@ -611,11 +729,16 @@ public class MazeController extends JPanel implements PropertyChangeListener, Ac
             }
         }
 
+        /**
+         * Unused.
+         */
         @Override
         public void keyReleased(KeyEvent e) {
         }
         
-        
+        /**
+         * Unused.
+         */
         @Override
         public void keyTyped(KeyEvent e) {
         }

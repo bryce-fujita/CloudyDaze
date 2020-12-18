@@ -11,14 +11,38 @@ import model.Vertex;
 
 public class Enemy extends Item {
     
-    private String question;
-    private String answer;
-    private String wrong1;
-    private String wrong2;
-    private String wrong3;
-    private int points;
+    /** Question used. */
+    private final String question;
+    
+    /** Correct answer. */
+    private final String answer;
+    
+    /** Wrong Answer. */
+    private final String wrong1;
+    
+    /** Wrong Answer. */
+    private final String wrong2;
+    
+    /** Wrong Answer. */
+    private final String wrong3;
+    
+    /** Number of points to reward player. */
+    private final int points;
+    
+    /** THe number of points given. */
     private int returned;
     
+    /**
+     * Constructor (not the best).
+     * @param location Location
+     * @param value Points given
+     * @param icon What icon to use
+     * @param ques The Question
+     * @param ans The Answer
+     * @param w1 Wrong answer
+     * @param w2 Wrong answer
+     * @param w3 Wrong Answer
+     */
     public Enemy(Vertex location, int value, String icon, String ques, String ans, String w1, String w2, String w3) {
         super(value, icon, "Enemy",location);
         points = value;
@@ -28,7 +52,10 @@ public class Enemy extends Item {
         wrong2 = w2;
         wrong3 = w3;
     }
-    //LMAO lambda expression idk?
+    
+    /**
+     * Used to either reward a player with positive or negative points.
+     */
     @Override
     public int itemAction() {
         //OpenQUESTION GUI...
@@ -65,6 +92,7 @@ public class Enemy extends Item {
         return returned;
     }
     
+    /** Sets what the returned value should be. */
     protected void setReturn(int i) {
         returned = i;
     }

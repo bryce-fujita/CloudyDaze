@@ -1,5 +1,5 @@
-# TCSS360Maze
-UWT 360 Cloud Maze Project
+# CloudyDaze Maze Game
+A maze game that randomly generates paths and requires the user to answer questions before being able to complete the maze.
 
 Introductory use to GitHub and Git.
 Members: Bryce Fujita and Ruvim Radchishin
